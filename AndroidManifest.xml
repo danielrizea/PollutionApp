@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="com.ar.test"
+      android:versionCode="1"
+      android:versionName="1.0">
+
+	<uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+	<uses-permission  android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+    <application android:icon="@drawable/icon" android:label="@string/app_name">
+        <uses-library android:name="com.google.android.maps" />
+        <!-- Service declaration   -->
+        <service android:name="com.polution.database.ServiceDataUpload">
+        </service>
+        
+        <!-- Broadcast receiver to check network status -->
+        <receiver android:name="com.polution.database.NetWatcher">
+   			<intent-filter>
+          		<action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+     		</intent-filter>
+		</receiver>
+		<!-- Broadcast receiver to get data from sensor -->
+        <receiver android:name="com.polution.database.AlarmNotifier" android:process=":getSensorData"> 
+    		
+    	</receiver>
+        
+        <!-- Content provider -->
+        <provider 
+            android:name="com.polution.database.PollutionContentProvider"
+            android:authorities="com.polution.database.PollutionContentProvider"
+            ></provider>
+        <!-- Activities -->
+        <activity android:name="com.polution.view.DashboardActivity"
+                  android:label="@string/app_name">
+           	 <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        
+        <activity android:name="com.polution.ar.ARView"
+                  android:label="@string/app_name">
+
+        </activity>
+
+		<activity android:name="com.polution.ar.MapViewPolution"
+                  android:label="@string/app_name">
+           <intent-filter>
+                <action android:name="android.intent.action.RUN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+		    
+        </activity>
+        <activity android:name="com.polution.ar.PollutionMapActivity"
+                  android:label="@string/app_name">
+
+        </activity>
+		
+		 <activity android:name="com.polution.bluetooth.BluetoothChatActivity"
+                  android:label="@string/app_name">
+
+        </activity>
+        
+		<activity android:name="com.polution.bluetooth.DeviceListActivity"
+                  android:label="@string/app_name">
+        </activity>
+        
+
+		
+    </application>
+</manifest>
