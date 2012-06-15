@@ -15,9 +15,12 @@ import com.polution.bluetooth.QueryService;
  */
 public class AlarmNotifier extends BroadcastReceiver{
 
+	public static int Intent_code = 192837;
+	
 	/** The DEBU g_ tag. */
 	private static String DEBUG_TAG = "AlarmNotifier";
 
+	
 	
 	/* (non-Javadoc)
 	 * @see android.content.BroadcastReceiver#onReceive(android.content.Context, android.content.Intent)
@@ -27,10 +30,11 @@ public class AlarmNotifier extends BroadcastReceiver{
 		// TODO Auto-generated method stub
 	
 		
-		Log.d(DEBUG_TAG," received intent");
+		Log.d(DEBUG_TAG," received intent start serviceIntent");
 		try {
 			//add notification
 		
+			
 			//start sensor query service
 			Intent serviceIntent = new Intent(context, QueryService.class);
  		   	context.startService(serviceIntent);

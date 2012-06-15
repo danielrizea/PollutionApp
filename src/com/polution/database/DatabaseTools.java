@@ -39,7 +39,7 @@ public class DatabaseTools extends Activity{
 				
 				//get precalculated point pollution intensity
 				point.intensity = (values.getInt(values.getColumnIndex("intensity")));
-
+				point.timestamp = values.getInt(values.getColumnIndex("timestamp"));
 				points.add(point);
 				
 			}while(values.moveToNext());

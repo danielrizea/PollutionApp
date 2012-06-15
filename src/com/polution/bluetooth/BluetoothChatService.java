@@ -52,6 +52,7 @@ public class BluetoothChatService {
     // Member fields
     private final BluetoothAdapter mAdapter;
     private final Handler mHandler;
+    //not used (nobody connects to this device)
     private AcceptThread mAcceptThread;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
@@ -106,8 +107,8 @@ public class BluetoothChatService {
 
         // Start the thread to listen on a BluetoothServerSocket
         if (mAcceptThread == null) {
-            mAcceptThread = new AcceptThread();
-            mAcceptThread.start();
+          //  mAcceptThread = new AcceptThread();
+          //  mAcceptThread.start();
         }
         setState(STATE_LISTEN);
     }
@@ -404,8 +405,10 @@ public class BluetoothChatService {
             
             while (true) {
                 try {
+                	
+                	if(mmInStream.available() > 0){
                     // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
+                		bytes = mmInStream.read(buffer);
                     	
                     	for(int i=0;i<bytes;i++)
                     		message_buffer[message_length+i] = buffer[i];
@@ -443,7 +446,8 @@ public class BluetoothChatService {
                             message_length = offset;
                         
                     }
-
+                	
+                	}
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();

@@ -17,10 +17,14 @@
 package com.polution.bluetooth;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.StringTokenizer;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.ContentResolver;
@@ -45,31 +49,30 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ar.test.R;
-import com.polution.ar.ARView;
-import com.polution.ar.PollutionMapActivity;
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.MapActivity;
+import com.google.android.maps.MapController;
+import com.google.android.maps.MyLocationOverlay;
+import com.google.android.maps.Overlay;
+import com.polution.database.AlarmNotifier;
 import com.polution.database.DatabaseTools;
+import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
+import com.polution.map.HeatMapOverlay;
+import com.polution.map.SimpleMapView;
 import com.polution.map.model.PolutionPoint;
 
 /**
  * This is the main Activity that displays the current chat session.
  */
-public class BluetoothChatActivity extends Activity {
+public class BluetoothChatActivity extends MapActivity {
 	
-	//location
-	String mCurrentProvider = LocationManager.NETWORK_PROVIDER;
-	Boolean mLocationEnabled = false;
-	protected LocationManager myLocationManager = null;
-	protected Location myLocation;
-	final float MINIMUM_DISTANCECHANGE_FOR_UPDATE = 1; // in Meters
-	final long MINIMUM_TIME_BETWEEN_UPDATE = 2000; // in Milliseconds
-	
+
     // Debugging
     private static final String TAG = "BluetoothChat";
     private static final boolean D = true;
@@ -91,17 +94,11 @@ public class BluetoothChatActivity extends Activity {
 
     // Layout Views
     private TextView mTitle;
-    private ListView mConversationView;
-    private EditText mOutEditText;
-    private Button mSendButton;
 
     private TextView param1;
     private TextView param2;
     private TextView param3;
     private TextView batteryStatus;
-    
-    private ImageView iconPolutionMap;
-    private ImageView iconAugmetnedReality;
     
     private ContentResolver contentResolver;
     // Name of the connected device
@@ -116,6 +113,41 @@ public class BluetoothChatActivity extends Activity {
     private BluetoothChatService mChatService = null;
 
     private static String VOLT_SIGN = "V";
+    
+    
+    //---------------------- Pollution Map Components -------------------------------------//
+    
+	private HeatMapOverlay overlay;
+	MapController mc;
+	SimpleMapView mapView;
+	GeoPoint p;
+	GeoPoint myLoc;
+	private TextView currentPointCoordinates;
+	
+	protected boolean doUpdates = true;
+	protected MapController myMapController = null;
+
+	protected LocationManager myLocationManager = null;
+	protected Location myLocation;
+	/** List of friends in */
+	protected ArrayList<GEOPoint> nearPoints = new ArrayList<GEOPoint>();
+	protected MyLocationOverlay myLocationOverlay;
+	
+	private MyLocListener myLocListener;
+
+	String mCurrentProvider = LocationManager.NETWORK_PROVIDER;
+	Boolean mLocationEnabled = false;
+	
+	final float MINIMUM_DISTANCECHANGE_FOR_UPDATE = 1; // in Meters
+	final long MINIMUM_TIME_BETWEEN_UPDATE = 2000; // in Milliseconds
+    
+	//zoom from 1 (large) - 21 (focus)
+    final int MAP_ZOOM_LEVEL = 16;
+    
+    private TextView providerNameTextView;
+    
+    private TextView applicationStatusTextView;
+    
     
     public String transformToSensorOutput(String stringValue){
     	
@@ -134,16 +166,43 @@ public class BluetoothChatActivity extends Activity {
         super.onCreate(savedInstanceState);
         if(D) Log.e(TAG, "+++ ON CREATE +++");
 
-        MyLocListener myLocListener = new MyLocListener();
-        // Initialize the LocationManager
-        this.myLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-        
-
-        contentResolver = this.getContentResolver();
         // Set up the window layout
         requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.bluetooth);
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_title);
+        
+        this.contentResolver = getContentResolver();
+        // Initialize the LocationManager
+        this.myLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        
+		mapView = (SimpleMapView)findViewById(R.id.mapview_polutionoverlay_sensors);
+		this.applicationStatusTextView = (TextView) findViewById(R.id.application_status);
+		this.providerNameTextView = (TextView) findViewById(R.id.provider_name);
+		System.out.println(mapView);
+		
+		this.overlay = new HeatMapOverlay(200, mapView);
+		
+		mapView.getOverlays().add(overlay);
+		
+		mc = mapView.getController();
+		mc.setZoom(MAP_ZOOM_LEVEL);
+        this.myMapController = mapView.getController();
+        
+		List<Overlay> listOfOverlays = mapView.getOverlays();
+		listOfOverlays.clear();
+		
+		
+		myLocationOverlay = new MyLocationOverlay(this, mapView);
+		
+		myLocListener = new MyLocListener();
+		
+		listOfOverlays.add(this.overlay);
+		listOfOverlays.add(myLocationOverlay);
+		
+		//myLocationOverlay.enableCompass();
+        myLocationOverlay.enableMyLocation();
+        
+        setupForLocationAutoUPDATES();
 
         // Set up the custom title
         mTitle = (TextView) findViewById(R.id.title_left_text);
@@ -212,26 +271,6 @@ public class BluetoothChatActivity extends Activity {
     private void setupChat() {
         Log.d(TAG, "setupChat()");
 
-        // Initialize the array adapter for the conversation thread
-        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
-        mConversationView = (ListView) findViewById(R.id.in);
-        mConversationView.setAdapter(mConversationArrayAdapter);
-
-        // Initialize the compose field with a listener for the return key
-        mOutEditText = (EditText) findViewById(R.id.edit_text_out);
-        mOutEditText.setOnEditorActionListener(mWriteListener);
-
-        // Initialize the send button with a listener that for click events
-        mSendButton = (Button) findViewById(R.id.button_send);
-        mSendButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                // Send a message using content of the edit text widget
-                TextView view = (TextView) findViewById(R.id.edit_text_out);
-                String message = view.getText().toString();
-                sendMessage(message);
-            }
-        });
-
         // Initialize the BluetoothChatService to perform bluetooth connections
         mChatService = new BluetoothChatService(this, mHandler);
 
@@ -299,7 +338,6 @@ public class BluetoothChatActivity extends Activity {
 
             // Reset out string buffer to zero and clear the edit text field
             mOutStringBuffer.setLength(0);
-            mOutEditText.setText(mOutStringBuffer);
         }
     }
 
@@ -329,7 +367,6 @@ public class BluetoothChatActivity extends Activity {
                 case BluetoothChatService.STATE_CONNECTED:
                     mTitle.setText(R.string.title_connected_to);
                     mTitle.append(mConnectedDeviceName);
-                    mConversationArrayAdapter.clear();
                     break;
                     
                 case BluetoothChatService.STATE_CONNECTING:
@@ -346,7 +383,7 @@ public class BluetoothChatActivity extends Activity {
                 byte[] writeBuf = (byte[]) msg.obj;
                 // construct a string from the buffer
                 String writeMessage = new String(writeBuf);
-                mConversationArrayAdapter.add("Me:  " + writeMessage);
+
                 break;
             case MESSAGE_READ:
                 byte[] readBuf = (byte[]) msg.obj;
@@ -359,9 +396,6 @@ public class BluetoothChatActivity extends Activity {
                 	Toast.makeText(getApplicationContext(),"Updates received from device",Toast.LENGTH_LONG);
                 else
                 	Toast.makeText(getApplicationContext(), "Can't decode senzor info : " + readMessage, Toast.LENGTH_LONG);
-                
-                
-                mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
                 
                 break;
             case MESSAGE_DEVICE_NAME:
@@ -412,8 +446,6 @@ public class BluetoothChatActivity extends Activity {
     						point.sensor_3 = Float.parseFloat(val3);
     						point.batteryVoltage = Float.parseFloat(battery);
     						
-    						
-    						LocationManager locationProvider = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
     						// Or use LocationManager.GPS_PROVIDER
 
     						Location lastKnownLocation = myLocationManager.getLastKnownLocation(mCurrentProvider);
@@ -496,7 +528,7 @@ public class BluetoothChatActivity extends Activity {
         case R.id.query_device :
         		sendMessage(PolutionDeviceConstants.MESSAGE_QUERY_DEVICE);
         	return true;
-        	
+        /*	
         case R.id.beep_device_start : 
         	sendMessage(PolutionDeviceConstants.MESSAGE_BEEP_START);
         	return true;
@@ -504,16 +536,95 @@ public class BluetoothChatActivity extends Activity {
         case R.id.beep_device_stop : 
         	sendMessage(PolutionDeviceConstants.MESSAGE_BEEP_STOP);
         	return true;
+       */
+        case R.id.start_sampling :{
+        	
+        	
+            // get a Calendar object with current time
+            //used to trigger at time
+        	Calendar cal = Calendar.getInstance();  
+            // add 5 minutes to the calendar object
+            //cal.add(Calendar.SECOND, 30);
+            
+            //set the sensor sampling period
+            Intent intent = new Intent(this, AlarmNotifier.class);
+           
+            intent.putExtra("alarm_message", "Query device");
+            // In reality, you would want to have a static variable for the request code instead of 192837
+            PendingIntent sender = PendingIntent.getBroadcast(this, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            
+            // Get the AlarmManager service
+            AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+            am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
+            //5 seconds
+            am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 15000, sender);
+            
+            Log.d(TAG,"Start sampling");
+        	
+        }break;
+       
+        
+        case R.id.stop_sampling : {
+        	 Intent intent = new Intent(this, AlarmNotifier.class);
+             
+             intent.putExtra("alarm_message", "A message for the app");
+             // In reality, you would want to have a static variable for the request code instead of 192837
+             PendingIntent sender = PendingIntent.getBroadcast(this, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+             AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+             
+             am.cancel(sender);
+             Log.d(TAG,"Stop sampling");
+        }
+        
+        case R.id.delete_points : {
+        	
+			Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/delete/point_table" );
+			contentResolver.delete(uri, null, null);
+        }
+        
         }
         return false;
     }
 
+    private Boolean setupForLocationAutoUPDATES() {
+		/*
+		 * Register with out LocationManager to send us an intent (whos
+		 * Action-String we defined above) when an intent to the location
+		 * manager, that we want to get informed on changes to our own position.
+		 * This is one of the hottest features in Android.
+		 */
+	
+		// Get the first provider available
+		
+		//get the best provider
+
+		 
+         List<String> mProviders = myLocationManager.getProviders(true);
+         if (mProviders.size() > 0) {
+             mCurrentProvider = LocationManager.NETWORK_PROVIDER;
+             for (String string : mProviders) {
+                 if (string.equals(LocationManager.GPS_PROVIDER))
+                     mCurrentProvider = LocationManager.GPS_PROVIDER;
+             }
+             myLocation = myLocationManager
+                     .getLastKnownLocation(mCurrentProvider);
+             
+             Log.d(TAG,"Provider chosen " + mCurrentProvider);
+             providerNameTextView.setText(""+mCurrentProvider+"");
+             myLocationManager.requestLocationUpdates(mCurrentProvider,
+            		 MINIMUM_TIME_BETWEEN_UPDATE, MINIMUM_DISTANCECHANGE_FOR_UPDATE,myLocListener);
+         }
+         return false;
+		
+
+	}
+    
     class MyLocListener implements LocationListener{
 
 		@Override
 		public void onLocationChanged(Location location) {
-
-        	
+	
+			mc.animateTo(myLocationOverlay.getMyLocation());
 		}
 
 		@Override
@@ -526,8 +637,10 @@ public class BluetoothChatActivity extends Activity {
                     if (string.equals(LocationManager.GPS_PROVIDER))
                         mCurrentProvider = LocationManager.GPS_PROVIDER;
                 }
+                Log.d(TAG,"Provider disabled, new provider " + mCurrentProvider);
                 myLocation = myLocationManager
                         .getLastKnownLocation(mCurrentProvider);
+                providerNameTextView.setText(""+mCurrentProvider+"");
                 myLocationManager.requestLocationUpdates(mCurrentProvider,
                        MINIMUM_TIME_BETWEEN_UPDATE, MINIMUM_DISTANCECHANGE_FOR_UPDATE, this );
             }
@@ -544,6 +657,9 @@ public class BluetoothChatActivity extends Activity {
                     if (string.equals(LocationManager.GPS_PROVIDER))
                         mCurrentProvider = LocationManager.GPS_PROVIDER;
                 }
+                
+                Log.d(TAG,"Provider enabled , new provider " + mCurrentProvider);
+                providerNameTextView.setText(""+mCurrentProvider+"");
                 myLocation = myLocationManager
                         .getLastKnownLocation(mCurrentProvider);
                 myLocationManager.requestLocationUpdates(mCurrentProvider,
@@ -556,5 +672,12 @@ public class BluetoothChatActivity extends Activity {
 			// TODO Auto-generated method stub
 			
 		}	
+	}
+
+   
+	@Override
+	protected boolean isRouteDisplayed() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

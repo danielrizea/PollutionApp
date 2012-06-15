@@ -7,7 +7,13 @@
         > 
     	 <CheckBoxPreference
             android:key="wifi enabled"
-            android:title="WiFi" />   
+            android:title="WiFi" />  
+            
+    	<ListPreference 
+    	    android:key="deviceMAC"
+    	    android:title="Sensor Device MAC"
+    	    android:summary="Choose the MAC of your sensor device"
+    	    /> 
         
     </PreferenceCategory>
    

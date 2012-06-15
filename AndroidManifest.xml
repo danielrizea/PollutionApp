@@ -17,6 +17,8 @@
         <!-- Service declaration   -->
         <service android:name="com.polution.database.ServiceDataUpload">
         </service>
+        <service android:name="com.polution.bluetooth.QueryService">
+        </service>
         
         <!-- Broadcast receiver to check network status -->
         <receiver android:name="com.polution.database.NetWatcher">
@@ -46,7 +48,6 @@
         
         <activity android:name="com.polution.ar.ARView"
                   android:label="@string/app_name">
-
         </activity>
 
 		<activity android:name="com.polution.ar.MapViewPolution"
@@ -55,23 +56,22 @@
                 <action android:name="android.intent.action.RUN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-		    
         </activity>
+        
         <activity android:name="com.polution.ar.PollutionMapActivity"
                   android:label="@string/app_name">
-
         </activity>
 		
 		 <activity android:name="com.polution.bluetooth.BluetoothChatActivity"
                   android:label="@string/app_name">
-
         </activity>
         
 		<activity android:name="com.polution.bluetooth.DeviceListActivity"
                   android:label="@string/app_name">
         </activity>
-        
-
+        <activity android:name="com.polution.view.ApplicationPreference"
+            ></activity>
 		
+	
     </application>
 </manifest>

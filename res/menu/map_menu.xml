@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/delete_points"
+          android:icon="@drawable/bluetooth_icon"
+          android:title="@string/delete_database"
+		/>
+    <item android:id="@+id/show_points"
+          android:icon="@drawable/bluetooth_icon"
+          android:title="@string/show_points" />
+</menu>

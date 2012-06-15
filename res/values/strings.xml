@@ -49,7 +49,7 @@
     <string name="title_feature1">Pollution Map</string>
     <string name="title_feature2">Augmented Reality</string>
     <string name="title_feature3">Sensor Readings</string>
-    <string name="title_feature4">Feature 4</string>
+    <string name="title_feature4">Preference</string>
     <string name="title_feature5">Feature 5</string>
     <string name="title_feature6">Feature 6</string>
 
@@ -64,5 +64,12 @@
     <string name="about_intro">This app is a demo to show you how to do an Android app based on the Dashboard pattern that has been used in apps like Twitter, Google IO, and Evernote.</string>
     <string name="search_intro">Content for the Search page goes here.</string>
     
+    
+    <!--  Menu options string -->
+    <string name="start_sampling">Start samplig</string>
+    <string name="stop_sampling">Stop sampling</string>
+    <string name="delete_database">Delete database</string>
+    <string name="detele_points">Delete all points </string>
+    <string name="show_points">Show points</string>
     
 </resources>

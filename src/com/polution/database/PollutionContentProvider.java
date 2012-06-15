@@ -85,6 +85,8 @@ public class PollutionContentProvider extends ContentProvider {
     
     private static final int DELETE_POINT = 4; 
     
+    private static final int DELETE_POINT_TABLE = 5;
+    
     
     // UriMatcher
     /** The Constant uriMatcher. */
@@ -96,6 +98,8 @@ public class PollutionContentProvider extends ContentProvider {
 		uriMatcher.addURI(PROVIDER_NAME, "points/#/#/#/#", POINTS_IN_BOUNDS);
 		uriMatcher.addURI(PROVIDER_NAME, "points/insert", INSERT_POINT);
 		uriMatcher.addURI(PROVIDER_NAME, "points/update/#", UPDATE_POINT);
+		
+		uriMatcher.addURI(PROVIDER_NAME, "points/delete/point_table",DELETE_POINT_TABLE);
 		
 	}
    
@@ -190,6 +194,9 @@ public class PollutionContentProvider extends ContentProvider {
 		      		 return PROVIDER_NAME + "/points/insert";
 		      	case UPDATE_POINT :
 		      		 return PROVIDER_NAME + "/points/update/#";
+		      	case DELETE_POINT_TABLE :
+		      		 return PROVIDER_NAME + "/points/delete/point_table";
+		      		 
 		        default:
 		            throw new IllegalArgumentException("Unsupported URI: " + uri);        
 		      }   
@@ -222,15 +229,16 @@ public class PollutionContentProvider extends ContentProvider {
 			    	  
 			    	  sqlBuilder.setTables(DATABASE_TABLE_POINTS);
 			    	  
-			    	  int bounds[][] = new int[2][2];
-			    	  
-			    	  Log.d(DEBUG_TAG, "Value of bounds : " + uri.getPathSegments().get(1) + " " +uri.getPathSegments().get(2) + uri.getPathSegments().get(3) + uri.getPathSegments().get(4) );
-			    	  
+			    	  double bounds[][] = new double[2][2];
+
 			    	  bounds[0][0] = Integer.parseInt(uri.getPathSegments().get(1));
 			    	  bounds[0][1] = Integer.parseInt(uri.getPathSegments().get(2));
 			    	  bounds[1][0] = Integer.parseInt(uri.getPathSegments().get(3));
 			    	  bounds[1][1] = Integer.parseInt(uri.getPathSegments().get(4));
-
+			    	  
+			    	  Log.d(DEBUG_TAG, "Value of bounds : " + bounds[0][0]/1E6 + " " +bounds[1][0]/1E6  +" " + bounds[0][1]/1E6 +" "+ bounds[1][1]/1E6 );
+			    	  
+			    	  
 			    	  sqlBuilder.appendWhere("lat >= " + bounds[0][0]/1E6 + " AND lat <= " + bounds[1][0]/1E6 + " AND lon >= " + bounds[0][1]/1E6 + " AND lon <= " + bounds[1][1]/1E6);
 
 			    	  //if (sortOrder==null || sortOrder=="") sortOrder = "timestamp";
@@ -238,9 +246,11 @@ public class PollutionContentProvider extends ContentProvider {
   
 			      default: throw new SQLException("Failed to process " + uri);
 		      }	      
+		      
 		      Cursor c = sqlBuilder.query(pollutionDatabase, projection, selection, selectionArgs, null, null, sortOrder);
 		      //---register to watch a content URI for changes---
 		      c.setNotificationUri(getContext().getContentResolver(), uri);
+		      
 		      return c;
 		   }
 		   
@@ -311,6 +321,13 @@ public class PollutionContentProvider extends ContentProvider {
 		    	  //update point with values
 		      }
 		      	break;
+		      	
+		      case DELETE_POINT_TABLE : {
+		    	  
+		    	  pollutionDatabase.delete(DATABASE_TABLE_POINTS, null, null);
+		      }
+		      	break;
+		      	
 			      default: throw new SQLException("Failed to process " + uri);
 		      }
 			   return 0;

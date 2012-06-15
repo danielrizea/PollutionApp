@@ -52,8 +52,12 @@
         <Button android:id="@+id/home_btn_feature3"
             style="@style/HomeButton"
             android:text="@string/title_feature3"
-            android:drawableTop="@drawable/bluetooth_icon"/>
-
+            android:drawableTop="@drawable/bluetooth_icon"/>  
+        <Button android:id="@+id/home_btn_feature4"
+            style="@style/HomeButton"
+            android:text="@string/title_feature4"
+            android:drawableTop="@drawable/settings"/>
+        
     </LinearLayout>
 
 </LinearLayout>

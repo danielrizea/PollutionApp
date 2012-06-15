@@ -18,6 +18,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.ar.test.R;
 import com.google.android.maps.GeoPoint;
@@ -40,26 +44,28 @@ public class PollutionMapActivity extends MapActivity {
 	private HeatMapOverlay overlay;
 	private ContentResolver contentResolver;
 	
-	private static String DEBUG_TAG = "PollutionMapActivity";
+	private static String TAG = "PollutionMapActivity";
 	
 	
 	//add-ons -------------------------------------------------------
 	MapController mc;
+	SimpleMapView mapView;
 	GeoPoint p;
-	
+	GeoPoint myLoc;
+	private TextView currentPointCoordinates;
 	
 	String mCurrentProvider;
-	Boolean mLocationEnabled = false;
+	//Boolean mLocationEnabled = false;
 	
-	final float MINIMUM_DISTANCECHANGE_FOR_UPDATE = 25; // in Meters
-	final long MINIMUM_TIME_BETWEEN_UPDATE = 5000; // in Milliseconds
+	final float MINIMUM_DISTANCECHANGE_FOR_UPDATE = 5; // in Meters
+	final long MINIMUM_TIME_BETWEEN_UPDATE = 1000; // in Milliseconds
 	
 	/**
 	 * Minimum distance in meters for a point to be recognize and to be
 	 * drawn
 	 */
 	
-	protected static final int NEARPOINT_MAX_DISTANCE = 10000000; // 10.000km
+	protected static final int NEARPOINT_MAX_DISTANCE = 10; // 10.000km
 
 	final Handler mHandler = new Handler();
 
@@ -98,7 +104,10 @@ public class PollutionMapActivity extends MapActivity {
 		setContentView(R.layout.polution_mapoverlay);
 		contentResolver = this.getContentResolver();
 		
-		final SimpleMapView mapView = (SimpleMapView)findViewById(R.id.mapview_polutionoverlay);
+		currentPointCoordinates = (TextView) findViewById(R.id.location_coordinates);
+		
+		
+		mapView = (SimpleMapView)findViewById(R.id.mapview_polutionoverlay);
 		this.overlay = new HeatMapOverlay(200, mapView);
 		mapView.getOverlays().add(overlay);
 		
@@ -121,7 +130,7 @@ public class PollutionMapActivity extends MapActivity {
 		
 		mc = mapView.getController();
 
-		MyLocListener myLocListener = new MyLocListener();
+		myLocListener = new MyLocListener();
 		
 		double lat, longit;
 		lat = 44.4;
@@ -168,36 +177,42 @@ public class PollutionMapActivity extends MapActivity {
         			overlay.update(points);
         		}
                 
-                GeoPoint myloc = myLocationOverlay.getMyLocation();
+                myLoc = myLocationOverlay.getMyLocation();
                 // 44.423115 26.115126
+                
+                /*
                 for(int i=0;i<3;i++){
                 	
-                	float latRandom = (float)(myloc.getLatitudeE6() / 1E6);
-                	float lonRandom = (float)(myloc.getLongitudeE6()/ 1E6);
+                	
+                	float latRandom = (float)(myLoc.getLatitudeE6() / 1E6);
+                	float lonRandom = (float)(myLoc.getLongitudeE6() / 1E6);
                 	
                 	Random rand = new Random();
                 	
-                	Log.d(DEBUG_TAG, "Generated point " + "lat:" + latRandom + (float)rand.nextInt(10)/10000 + " " + "lon :" + lonRandom + (float)rand.nextInt(10)/10000);
+                //	Log.d(DEBUG_TAG, "Generated point " + "lat:" + latRandom + (float)rand.nextInt(10)/10000 + " " + "lon :" + lonRandom + (float)rand.nextInt(10)/10000);
                 	
                 	PolutionPoint point = new PolutionPoint(latRandom + (float)rand.nextInt(10)/10000, lonRandom + (float)rand.nextInt(10)/10000);
+                	point.intensity = point.calculatePollutionIntensityValue();
                 	
-                	//Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
+                	//uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
                 	//contentResolver.insert(uri, DatabaseTools.getContentValues(point));
-                	
-                	//database.insert(point);
+
                 }
+                */
             }
         });
        
         // Initialize the LocationManager
         this.myLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         
+        setupForLocationAutoUPDATES();
+        
       // this.updateView();
        
         /* Prepare the things, that will give
          * us the ability, to receive Information
          * about our GPS-Position. OR USE NETWORK */
-       // this.setupForLocationAutoUPDATES();
+        //this.setupForLocationAutoUPDATES();
        
         /* Update the list of our friends once on the start,
          * as they are not(yet) moving, no updates to them are necessary */
@@ -215,22 +230,79 @@ public class PollutionMapActivity extends MapActivity {
         // add 5 minutes to the calendar object
         cal.add(Calendar.SECOND, 30);
         
+        
+        
+        //set the sensor sampling period
         Intent intent = new Intent(this, AlarmNotifier.class);
        
         intent.putExtra("alarm_message", "A message for the app");
         // In reality, you would want to have a static variable for the request code instead of 192837
-        PendingIntent sender = PendingIntent.getBroadcast(this, 192837, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        
+        PendingIntent sender = PendingIntent.getBroadcast(this, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         // Get the AlarmManager service
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
        // am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
-        //5 seconds
-        //am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 5000, sender);
+        //30 seconds
+        //am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 30000, sender);
         //cancel alarm
-        //am.cancel(sender);
+        am.cancel(sender);
+
 	}
 
+	private Boolean setupForLocationAutoUPDATES() {
+		/*
+		 * Register with out LocationManager to send us an intent (whos
+		 * Action-String we defined above) when an intent to the location
+		 * manager, that we want to get informed on changes to our own position.
+		 * This is one of the hottest features in Android.
+		 */
 	
+		// Get the first provider available
+		
+		//get the best provider
+
+		 
+         List<String> mProviders = myLocationManager.getProviders(true);
+         if (mProviders.size() > 0) {
+             mCurrentProvider = LocationManager.NETWORK_PROVIDER;
+             for (String string : mProviders) {
+                 if (string.equals(LocationManager.GPS_PROVIDER))
+                     mCurrentProvider = LocationManager.GPS_PROVIDER;
+             }
+             myLocation = myLocationManager
+                     .getLastKnownLocation(mCurrentProvider);
+             
+             myLocationManager.requestLocationUpdates(mCurrentProvider,
+            		 MINIMUM_TIME_BETWEEN_UPDATE, MINIMUM_DISTANCECHANGE_FOR_UPDATE,myLocListener);
+         }
+         return false;
+		
+
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.map_menu, menu);
+	    return true;
+	}
+	
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// TODO Auto-generated method stub
+		
+		switch(item.getItemId()){
+		
+		case R.id.delete_points : {
+		
+			Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/points/delete/point_table" );
+			contentResolver.delete(uri, null, null);
+		}
+		
+		}
+		
+		return super.onOptionsItemSelected(item);
+	}
 	class MyLocListener implements LocationListener{
 
 		@Override
@@ -241,7 +313,19 @@ public class PollutionMapActivity extends MapActivity {
 			
 			//Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
         	//contentResolver.insert(uri, DatabaseTools.getContentValues(point));
-
+			
+			Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + mapView.getBounds()[0][0] + "/" + mapView.getBounds()[0][1] + "/" + mapView.getBounds()[1][0] + "/" + mapView.getBounds()[1][1]);
+    		Cursor values = managedQuery(uri, null, null, null, null);
+    		
+    		List<PolutionPoint> points = DatabaseTools.getPointsInBounds(values);
+    		
+    		myLoc = new GeoPoint((int)(location.getLatitude()*1E6),(int)(location.getLongitude()*1E6));
+ 
+    		currentPointCoordinates.setText("lat:" + (double)(myLoc.getLatitudeE6()/1E6) + " lon:" + (double)(myLoc.getLongitudeE6()/1E6));
+    		
+    		if(points.size() > 0){
+    			overlay.update(points);
+    		}
         	
 		}
 
@@ -255,6 +339,8 @@ public class PollutionMapActivity extends MapActivity {
                     if (string.equals(LocationManager.GPS_PROVIDER))
                         mCurrentProvider = LocationManager.GPS_PROVIDER;
                 }
+                
+                Log.d(TAG,"Provider disabled, new provider " + mCurrentProvider);
                 myLocation = myLocationManager
                         .getLastKnownLocation(mCurrentProvider);
                 myLocationManager.requestLocationUpdates(mCurrentProvider,
@@ -272,6 +358,8 @@ public class PollutionMapActivity extends MapActivity {
                     if (string.equals(LocationManager.GPS_PROVIDER))
                         mCurrentProvider = LocationManager.GPS_PROVIDER;
                 }
+                
+                Log.d(TAG,"Provider enabled , new provider " + mCurrentProvider);
                 myLocation = myLocationManager
                         .getLastKnownLocation(mCurrentProvider);
                 myLocationManager.requestLocationUpdates(mCurrentProvider,

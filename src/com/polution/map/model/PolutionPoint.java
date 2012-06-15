@@ -9,8 +9,8 @@ import java.util.Random;
  */
 public class PolutionPoint {
 	
-	public float lat;
-	public float lon;
+	public double lat;
+	public double lon;
 	public int intensity;
 	
 	
@@ -46,7 +46,11 @@ public class PolutionPoint {
 		//return intensity;
 	}
 	
-	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "[ lat:" + lat +" lon:" + lon +" sensors:" + sensor_1 + ", " + sensor_2 + ", " + sensor_3 + ", " + batteryVoltage + ", intensity:" +intensity + ", timestamp " + timestamp + " ]" ; 
+	}
 	public static double getDistance(double lat1, double lon1, double lat2,double lon2){
 		
 		double R = 6371; // km
