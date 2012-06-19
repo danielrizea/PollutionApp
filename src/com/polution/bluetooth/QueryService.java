@@ -212,7 +212,7 @@ public class QueryService extends IntentService{
 	                	   p.lat = myLoc.getLatitude();
 	                	   p.lon = myLoc.getLongitude();
 	                	   p.timestamp = (int)System.currentTimeMillis();
-	                	   p.intensity = p.calculatePollutionIntensityValue();
+	                	   p.calculatePollutionIntensityValue();
 	                	   
 	                	   Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
 	                	   contentResolver.insert(uri, DatabaseTools.getContentValues(p));
@@ -282,23 +282,7 @@ public class QueryService extends IntentService{
        						point.sensor_2 = Float.parseFloat(val2);
        						point.sensor_3 = Float.parseFloat(val3);
        						point.batteryVoltage = Float.parseFloat(battery);
-       						
-       						
-       					//	LocationManager locationProvider = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-       						// Or use LocationManager.GPS_PROVIDER
 
-       					//	Location lastKnownLocation = myLocationManager.getLastKnownLocation(mCurrentProvider);
-       					/*	
-       						if(lastKnownLocation != null){
-       							point.lat = (float)lastKnownLocation.getLatitude();
-       							point.lon = (float)lastKnownLocation.getLongitude();
-       						}
-       						
-       						Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
-       	                	contentResolver.insert(uri, DatabaseTools.getContentValues(point));
-       	                	Log.d("debug","Point added " + point.lat + " " + point.lon );
-       						Toast.makeText(this, "Point saved", Toast.LENGTH_SHORT);
-       					*/	
        						return point;
        						
        					}else

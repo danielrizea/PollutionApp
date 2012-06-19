@@ -1,11 +1,8 @@
 package com.polution.ar;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +17,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,7 +33,6 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.polution.bluetooth.QueryService;
-import com.polution.database.AlarmNotifier;
 import com.polution.database.DatabaseTools;
 import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
@@ -49,13 +50,20 @@ public class PollutionMapActivity extends MapActivity {
 	
 	private static String TAG = "PollutionMapActivity";
 	
+	//available gases
+	private static final int CO = 0;
+	private static final int NO = 1;
+	private static final int AIR_Q = 2;
+	private static final int ALL_GAS = 3;
 	
+	private int selectedFlagForDesplay = PolutionPoint.CO;
 	//add-ons -------------------------------------------------------
 	MapController mc;
 	SimpleMapView mapView;
 	GeoPoint p;
 	GeoPoint myLoc;
 	private TextView currentPointCoordinates;
+	private TextView selectedGas;
 	
 	String mCurrentProvider;
 	//Boolean mLocationEnabled = false;
@@ -109,9 +117,8 @@ public class PollutionMapActivity extends MapActivity {
 		contentResolver = this.getContentResolver();
 		
 		currentPointCoordinates = (TextView) findViewById(R.id.location_coordinates);
-		
-		
 		mapView = (SimpleMapView)findViewById(R.id.mapview_polutionoverlay);
+		selectedGas = (TextView)findViewById(R.id.shown_gas);
 		
 		//set street level depth
 		this.overlay = new HeatMapOverlay(200, mapView);
@@ -187,27 +194,6 @@ public class PollutionMapActivity extends MapActivity {
                 updatePollutionOverlay();
                 
                 myLoc = myLocationOverlay.getMyLocation();
-                // 44.423115 26.115126
-                
-                /*
-                for(int i=0;i<3;i++){
-                	
-                	
-                	float latRandom = (float)(myLoc.getLatitudeE6() / 1E6);
-                	float lonRandom = (float)(myLoc.getLongitudeE6() / 1E6);
-                	
-                	Random rand = new Random();
-                	
-                //	Log.d(DEBUG_TAG, "Generated point " + "lat:" + latRandom + (float)rand.nextInt(10)/10000 + " " + "lon :" + lonRandom + (float)rand.nextInt(10)/10000);
-                	
-                	PolutionPoint point = new PolutionPoint(latRandom + (float)rand.nextInt(10)/10000, lonRandom + (float)rand.nextInt(10)/10000);
-                	point.intensity = point.calculatePollutionIntensityValue();
-                	
-                	//uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
-                	//contentResolver.insert(uri, DatabaseTools.getContentValues(point));
-
-                }
-                */
             }
         });
        
@@ -216,6 +202,16 @@ public class PollutionMapActivity extends MapActivity {
         
         setupForLocationAutoUPDATES();
         
+        
+        
+        String[] gasList = new String[]{"CO gas", "NO gas", "Air quality", "All gas"};
+        Spinner spinner = (Spinner) findViewById(R.id.spinner_choose_gas);
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, gasList );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
+        spinner.setOnItemSelectedListener(new MyOnItemSelectedListener());
+
       // this.updateView();
        
         /* Prepare the things, that will give
@@ -227,36 +223,42 @@ public class PollutionMapActivity extends MapActivity {
          * as they are not(yet) moving, no updates to them are necessary */
         //this.refreshFriendsList(NEARPOINT_MAX_DISTANCE);
 
-		
-        //get my location and add dummy points;
-        
-       
-        
-        //schedule event
-        
-        // get a Calendar object with current time
-        Calendar cal = Calendar.getInstance();
-        // add 5 minutes to the calendar object
-        cal.add(Calendar.SECOND, 30);
-        
-        
-        
-        //set the sensor sampling period
-        Intent intent = new Intent(this, AlarmNotifier.class);
-       
-        intent.putExtra("alarm_message", "A message for the app");
-        // In reality, you would want to have a static variable for the request code instead of 192837
-        PendingIntent sender = PendingIntent.getBroadcast(this, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        // Get the AlarmManager service
-        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-       // am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
-        //30 seconds
-        //am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 30000, sender);
-        //cancel alarm
-        am.cancel(sender);
-
 	}
 
+    private class MyOnItemSelectedListener implements OnItemSelectedListener {
+
+        public void onItemSelected(AdapterView<?> parent,
+            View view, int pos, long id) {
+        	
+        	String selection = "";
+        	switch(pos){
+	        	case CO : {
+	        		selectedFlagForDesplay = PolutionPoint.CO;
+	        		selection = "CO";
+	        	} break;
+	        	case NO : {
+	        		selectedFlagForDesplay = PolutionPoint.NO;
+	        		selection = "NO";
+	        	} break;
+	        	case AIR_Q : {
+	        		selectedFlagForDesplay = PolutionPoint.AIR_Q;
+	        		selection = "Air Q";
+	        	} break;
+	        	case ALL_GAS : {
+	        		selectedFlagForDesplay = PolutionPoint.ALL_GAS;
+	        		selection = "All gas";
+	        	} break;
+        	}
+        	updatePollutionOverlay();
+        	selectedGas.setText(selection);
+        	
+          Toast.makeText(parent.getContext(), "The selected gas is :" + parent.getAdapter().getItem(pos), Toast.LENGTH_SHORT).show();
+        }
+
+        public void onNothingSelected(AdapterView parent) {
+          // Do nothing.
+        }
+    }
 	private Boolean setupForLocationAutoUPDATES() {
 		/*
 		 * Register with out LocationManager to send us an intent (whos
@@ -299,17 +301,10 @@ public class PollutionMapActivity extends MapActivity {
 			
 			values.close();
 		}catch(Exception e){};
-		
-	
-		/*for(int i=0;i<points.size();i++){
-			points.get(i).intensity = points.get(i).calculatePollutionIntensityValue();
-		Log.d(TAG, " Point pollution " + i +" " + points.get(i).intensity );	
-		}
-		*/
-		Log.d(TAG, "here");
-			
+
+
 		if(points.size() > 0){
-			overlay.update(points);
+			overlay.update(points,selectedFlagForDesplay);
 		}
 
 	}

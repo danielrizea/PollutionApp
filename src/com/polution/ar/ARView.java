@@ -18,86 +18,105 @@ package com.polution.ar;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Display;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
-import com.google.android.maps.MapActivity;
-import com.google.android.maps.MapView;
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.MapController;
+import com.google.android.maps.MyLocationOverlay;
+import com.polution.database.DatabaseTools;
+import com.polution.database.GEOPoint;
+import com.polution.database.PollutionContentProvider;
+import com.polution.map.model.PolutionPoint;
 
 // ----------------------------------------------------------------------
 
-public class ARView extends MapActivity {    
+public class ARView extends Activity implements SensorEventListener{    
     private Preview mPreview;
     private DrawOnTop mDrawOnTop;
-    private MapView mapView;
+
+    private ContentResolver contentResolver;
+    
+    public final String TAG = "ARView";
+    
+    private PollutionCameraOverlay pollutionOverlay;
+    //Location 
+    public int LOCATION_CONSTANT = 10000;
+    
+	protected MapController mc;
+	protected boolean doUpdates = true;
+	protected MapController myMapController = null;
+
+	protected LocationManager myLocationManager = null;
+	protected Location myLocation;
+	/** List of friends in */
+	protected ArrayList<GEOPoint> nearPoints = new ArrayList<GEOPoint>();
+	protected MyLocationOverlay myLocationOverlay;
+	
+	private MyLocListener myLocListener;
+
+	String mCurrentProvider = LocationManager.NETWORK_PROVIDER;
+	Boolean mLocationEnabled = false;
+	
+	final float MINIMUM_DISTANCECHANGE_FOR_UPDATE = 1; // in Meters
+	final long MINIMUM_TIME_BETWEEN_UPDATE = 2000; // in Milliseconds
+    
+    
     private RadarView radarView;
 
     private double lastAngle = 0;
-    
-    private double radarSensitivityEps = 0;
-    private double radarIgnore = 25;
-    private SensorManager mSensorManager;
-    private Sensor mSensor;
-    //private CompassView compassView;
-    private float[] mValues;
 
+    //private CompassView compassView; 
+    SensorManager sensorManager;
+
+	float[] mValues=new float[3]; // magnetic sensor values
+	float[] aValues=new float[3]; // accelerometer sensor values 
+	float[] oValues=new float[3]; // orientation sensor values
+	
+	public static final int ORIENT = 1;
+	public static final int ACC_MAGN = 2;
+	
+	public static float EPS = 5;
+	
+	float[] oldOvalues = null;
+	/*
+	 * time smoothing constant for low-pass filter
+	 * 0 ≤ α ≤ 1 ; a smaller value basically means more smoothing
+	 * See: http://en.wikipedia.org/wiki/Low-pass_filter#Discrete-time_realization
+	 */
+	static final float ALPHA = 0.1f;
+    
+    
+    private CompassView compassView;
     // in landscape mode subtract 90
     private float rotation = 0;
-    
- // sclae radar onclick
-    private boolean scaled = false;
-    private int scaleFactor = 2;
 
-    private final SensorEventListener mListener = new SensorEventListener() {
-        public void onSensorChanged(SensorEvent event) {
-           
-        	mValues = event.values;
-        	mValues[0] = mValues[0] + rotation;
-        	
-        	if(mValues[0] > 360)
-        		mValues[0] = mValues[0] - 360;
-        	
-        	
-        	
-        	Log.d("debug",
-                    "sensorChanged (" + mValues[0] + ", " + event.values[1] + ", " + event.values[2] + ")");
-            
-        	
-        	
-        	if(Math.abs(lastAngle - mValues[0]) > radarSensitivityEps){
-            	
-        	radarView.mValues = mValues;
-        	lastAngle = mValues[0]; 
-        	}
-        	
-            if (radarView!= null) {
-                radarView.invalidate();
-            }
-        }
-
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        }
-        
-    };
-    
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,57 +126,30 @@ public class ARView extends MapActivity {
         // Hide the window title.
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         
-
-        
-        
+        sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+ 
         // Create our Preview view and set it as the content of our activity.
         // Create our DrawOnTop view.
-        mDrawOnTop = new DrawOnTop(this);
-        radarView = new RadarView(this);
-        mPreview = new Preview(this, mDrawOnTop,radarView);
-        mapView = new MapView(this, "0d2yLfG2hHgd_L1LeWQqtoOX-tPzafQ_ATUX1Fg");
+        
+        compassView = new CompassView(this);
+        
+		//updateOrientation(compassView, new float[] {0, 0, 0});
+        
+        Display display = getWindowManager().getDefaultDisplay();
+
+        pollutionOverlay = new PollutionCameraOverlay(this, display.getWidth(), display.getHeight());
+        
+        //mDrawOnTop = new DrawOnTop(this);
+        mPreview = new Preview(this, pollutionOverlay,compassView);
     
         setContentView(mPreview);
-        addContentView(mDrawOnTop, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+        addContentView(pollutionOverlay, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
         
-        addContentView(radarView, new LayoutParams(100, 100));
- 
-        radarView.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				// TODO Auto-generated method stuff
-				
-				if(scaled == false){
-				ViewGroup.LayoutParams params = radarView.getLayoutParams();
-				    params.height = scaleFactor * params.height;
-				    params.width = scaleFactor * params.width;
-				    
-				    radarView.setLayoutParams(params);
-				    radarView.scaleFactor = radarView.scaleFactor * scaleFactor;
-				    
-				    scaled = true;
-				}
-				else
-				{
-					
-					ViewGroup.LayoutParams params = radarView.getLayoutParams();
-				    params.height = params.height / scaleFactor;
-				    params.width =  params.width / scaleFactor;
-				    
-				    radarView.setLayoutParams(params);
-				    radarView.scaleFactor = radarView.scaleFactor / scaleFactor;
-				    
-					
-					scaled = false;
-					
-				}
-			}
-		});
+        //addContentView(radarView, new LayoutParams(100, 100));
+        
+        addContentView(compassView, new LayoutParams(100,100));
+        
         
         int test = getResources().getConfiguration().orientation;
         if(Configuration.ORIENTATION_LANDSCAPE == test) {
@@ -166,16 +158,76 @@ public class ARView extends MapActivity {
                 else {
                     rotation = 0f;
                 }
-
+  
+        this.contentResolver = getContentResolver();
+        // Initialize the LocationManager
+        this.myLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         
+		
+		myLocListener = new MyLocListener();
         
+        setupForLocationAutoUPDATES();
     }
+    public void onSensorChanged(SensorEvent event) {
+    	
+		  if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+		      aValues = lowPass(event.values, aValues);
+		    if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+		      mValues = lowPass(event.values,mValues);
 
+		    
+		  oValues = computeOrientation(aValues, mValues);
+		  
+		  if(oldOvalues != null){
+			  
+			  if(Math.abs(oldOvalues[0]-oValues[0])< EPS){
+				  oValues = oldOvalues;
+			  }
+		  }
+		  oldOvalues = oValues;
+		  
+		  //System.out.println("OValues " + oValues[0] + " " + oValues[1] + " " + oValues[2] );
+		  
+		  updateOrientation(compassView, oValues);
 
-	@Override
-	protected boolean isRouteDisplayed() {
-		// TODO Auto-generated method stub
-		return false;
+	}
+    protected float[] lowPass( float[] input, float[] output ) {
+	    if ( output == null ) return input;
+
+	    for ( int i=0; i<input.length; i++ ) {
+	        output[i] = output[i] + ALPHA * (input[i] - output[i]);
+	    }
+	    return output;
+	}
+	
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+	}
+	
+	private void updateOrientation(CompassView cv, float[] values){
+		
+		if(cv!=null){
+			cv.setAzimuth(values[0]  + rotation);
+			cv.setPitch(values[1]);
+			cv.setRoll(-values[2]);
+	
+			//invalidate on camera preview redraw
+			//cv.invalidate();
+		}
+	}
+		
+	
+	private float[] computeOrientation(float[] aValues, float[] mValues) {
+		  float[] values = new float[3];
+		  float[] R = new float[9];
+		  
+		  SensorManager.getRotationMatrix(R, null, aValues, mValues);
+		  SensorManager.getOrientation(R, values);
+		  // Convert from Radians to Degrees.
+		  values[0] = (float) Math.toDegrees(values[0]);
+		  values[1] = (float) Math.toDegrees(values[1]);
+		  values[2] = (float) Math.toDegrees(values[2]);
+		  return values;
 	}
 
 	 @Override
@@ -184,8 +236,10 @@ public class ARView extends MapActivity {
 	       // if (Config.DEBUG) Log.d(TAG, "onResume");
 	        super.onResume();
 
-	        mSensorManager.registerListener(mListener, mSensor,
-	                SensorManager.SENSOR_DELAY_UI);
+
+			 sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),SensorManager.SENSOR_DELAY_GAME);
+			 sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_GAME);
+			  
 	       
 	    }
 
@@ -193,9 +247,121 @@ public class ARView extends MapActivity {
 	    protected void onStop()
 	    {
 	        //if (Config.DEBUG) Log.d(TAG, "onStop");
-	        mSensorManager.unregisterListener(mListener);
-	        super.onStop();
+	    	super.onStop();
+			sensorManager.unregisterListener(this);
+			myLocationManager.removeUpdates(myLocListener);
 	    }
+	    
+	    private Boolean setupForLocationAutoUPDATES() {
+			/*
+			 * Register with out LocationManager to send us an intent (whos
+			 * Action-String we defined above) when an intent to the location
+			 * manager, that we want to get informed on changes to our own position.
+			 * This is one of the hottest features in Android.
+			 */
+		
+			// Get the first provider available
+			
+			//get the best provider
+
+			 
+	         List<String> mProviders = myLocationManager.getProviders(true);
+	         if (mProviders.size() > 0) {
+	             mCurrentProvider = LocationManager.NETWORK_PROVIDER;
+	             for (String string : mProviders) {
+	                 if (string.equals(LocationManager.GPS_PROVIDER))
+	                     mCurrentProvider = LocationManager.GPS_PROVIDER;
+	             }
+	             myLocation = myLocationManager
+	                     .getLastKnownLocation(mCurrentProvider);
+	             
+	             //Log.d(TAG,"Provider chosen " + mCurrentProvider);
+
+	             myLocationManager.requestLocationUpdates(mCurrentProvider,
+	            		 MINIMUM_TIME_BETWEEN_UPDATE, MINIMUM_DISTANCECHANGE_FOR_UPDATE,myLocListener);
+	         }
+	         return false;
+			
+
+		}
+	    
+	    class MyLocListener implements LocationListener{
+
+			@Override
+			public void onLocationChanged(Location location) {
+		
+				//mc.animateTo(myLocationOverlay.getMyLocation());
+				//TODO 
+				GeoPoint myloc = new GeoPoint((int)(location.getLatitude()*1E6), (int)(location.getLongitude()*1E6));
+
+				int startLat = myloc.getLatitudeE6() - LOCATION_CONSTANT;
+				int stopLat = myloc.getLatitudeE6() + LOCATION_CONSTANT;
+				int startLon = myloc.getLongitudeE6() - LOCATION_CONSTANT;
+				int stopLon = myloc.getLongitudeE6() + LOCATION_CONSTANT;
+					
+				Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + startLat + "/" + startLon + "/" + stopLat + "/" + stopLon);
+				Cursor values = contentResolver.query(uri, null, null, null, null);
+					
+				List<PolutionPoint> points = DatabaseTools.getPointsInBounds(values);
+					
+				Log.d(TAG,"Location changed");
+				
+				if(points.size()>0){
+					
+					pollutionOverlay.value = points.get(0).calculatePollutionIntensityValue();
+				}
+					
+				values.close();
+
+			}
+
+			@Override
+			public void onProviderDisabled(String provider) {
+				// TODO Auto-generated method stub
+				List<String> mProviders = myLocationManager.getProviders(true);
+	            if (mProviders.size() > 0) {
+	                mCurrentProvider = LocationManager.NETWORK_PROVIDER;
+	                for (String string : mProviders) {
+	                    if (string.equals(LocationManager.GPS_PROVIDER))
+	                        mCurrentProvider = LocationManager.GPS_PROVIDER;
+	                }
+	                Log.d(TAG,"Provider disabled, new provider " + mCurrentProvider);
+	                myLocation = myLocationManager
+	                        .getLastKnownLocation(mCurrentProvider);
+
+	                myLocationManager.requestLocationUpdates(mCurrentProvider,
+	                       MINIMUM_TIME_BETWEEN_UPDATE, MINIMUM_DISTANCECHANGE_FOR_UPDATE, this );
+	            }
+	            Toast.makeText(getApplicationContext(), "Provider changed to" + mCurrentProvider, Toast.LENGTH_SHORT);
+			}
+
+			@Override
+			public void onProviderEnabled(String provider) {
+				// TODO Auto-generated method stub
+				List<String> mProviders = myLocationManager.getProviders(true);
+	            if (mProviders.size() > 0) {
+	                mCurrentProvider = LocationManager.NETWORK_PROVIDER;
+	                for (String string : mProviders) {
+	                    if (string.equals(LocationManager.GPS_PROVIDER))
+	                        mCurrentProvider = LocationManager.GPS_PROVIDER;
+	                }
+	                
+	                Log.d(TAG,"Provider enabled , new provider " + mCurrentProvider);
+
+	                myLocation = myLocationManager
+	                        .getLastKnownLocation(mCurrentProvider);
+	                myLocationManager.requestLocationUpdates(mCurrentProvider,
+	                       MINIMUM_TIME_BETWEEN_UPDATE, MINIMUM_DISTANCECHANGE_FOR_UPDATE, this );
+	            }
+			}
+
+			@Override
+			public void onStatusChanged(String provider, int status, Bundle extras) {
+				// TODO Auto-generated method stub
+				
+			}	
+		}
+
 
 }
 
@@ -208,16 +374,16 @@ public class ARView extends MapActivity {
 class Preview extends SurfaceView implements SurfaceHolder.Callback {
     SurfaceHolder mHolder;
     Camera mCamera;
-    DrawOnTop mDrawOnTop;
-    RadarView radarView;
+    PollutionCameraOverlay pollutionOverlay;
+    CompassView compassView;
     boolean mFinished;
 
-    Preview(Context context, DrawOnTop drawOnTop,RadarView radar) {
+    Preview(Context context, PollutionCameraOverlay pollutionOverlay,CompassView compassView) {
         super(context);
         
-        mDrawOnTop = drawOnTop;
+        this.pollutionOverlay = pollutionOverlay;
         mFinished = false;
-        radarView = radar;
+        this.compassView = compassView;
         
 
         // Install a SurfaceHolder.Callback so we get notified when the
@@ -237,10 +403,14 @@ class Preview extends SurfaceView implements SurfaceHolder.Callback {
            mCamera.setPreviewCallback(new PreviewCallback() {
         	  public void onPreviewFrame(byte[] data, Camera camera)
         	  {
-        		  if ( (radarView == null) || mFinished )
+        		  
+        		  pollutionOverlay.invalidate();
+        		  
+        		  if ( (compassView == null) || mFinished )
         			  return;
         		 
-    			  radarView.invalidate();
+    			  compassView.invalidate();
+    			  
     			  
         	  }
            });

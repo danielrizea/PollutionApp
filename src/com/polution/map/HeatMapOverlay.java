@@ -88,9 +88,9 @@ public class HeatMapOverlay extends Overlay {
 	 * GoogleMaps. The class will convert it.
 	 * @param points
 	 */
-	public void update(List<PolutionPoint> points){
+	public void update(List<PolutionPoint> points, int flag){
 		float pxRadius = (float) (mapView.getProjection().metersToEquatorPixels(radius) * 1/Math.cos(Math.toRadians(mapView.getMapCenter().getLatitudeE6()/1E6)));
-		HeatTask task = new HeatTask(mapView.getWidth(), mapView.getHeight(), pxRadius, points);
+		HeatTask task = new HeatTask(mapView.getWidth(), mapView.getHeight(), pxRadius, points, flag);
 		new Thread(task).start();
 	}	
 	
@@ -103,14 +103,12 @@ public class HeatMapOverlay extends Overlay {
 		private float radius;
 		private List<PolutionPoint> points;
 
-		private Bitmap auxBuffer;
-		private Canvas auxCanvas;
+		//decide which values for sensor to have from point
+		private int flag = 0; 
 		
-		public HeatTask(int width, int height, float radius, List<PolutionPoint> points){
+		public HeatTask(int width, int height, float radius, List<PolutionPoint> points, int flag){
 			backbuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-			auxBuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 			myCanvas = new Canvas(backbuffer);
-			auxCanvas = new Canvas(auxBuffer);
 			Paint p = new Paint();
 			p.setStyle(Paint.Style.FILL);
 			p.setColor(Color.TRANSPARENT);
@@ -118,7 +116,7 @@ public class HeatMapOverlay extends Overlay {
 			this.height = height;
 			this.points = points;
 			myCanvas.drawRect(0, 0, width, height, p);
-			auxCanvas.drawRect(0,0, width, height, p);
+			this.flag = flag;
 			this.radius = radius;
 			
 			System.out.println("Out " + radius +" " + width +" "+ height);
@@ -238,11 +236,9 @@ public class HeatMapOverlay extends Overlay {
 			for(PolutionPoint p : points){
 				GeoPoint in = new GeoPoint((int)(p.lat*1E6),(int)(p.lon*1E6));
 				proj.toPixels(in, out);
-				addPoint(out.x, out.y, p.intensity,gp);
-				//putCircleMask(out.y, out.x, (int)radius, pixels);
+				addPoint(out.x, out.y, p ,gp);
 			}
-			//putCircleMask(out.x, out.y, (int)radius, pixels);
-			System.out.println("Finish display");
+
 			
 			colorize(0, 0);
 			
@@ -253,10 +249,23 @@ public class HeatMapOverlay extends Overlay {
 		}
 		
 		
-		private void addPoint(float x, float y, int times, Paint gp) {
+		private void addPoint(float x, float y, PolutionPoint p, Paint gp) {
 	
+			int value = 0;
+			//get poit value
+			switch(this.flag){
+			
+			case PolutionPoint.CO : { value = p.intensity_CO;} break;
+			case PolutionPoint.NO : { value = p.intensity_NO;} break;
+			case PolutionPoint.AIR_Q : {value = p.intensity_AirQ;} break;
+			case PolutionPoint.ALL_GAS : {value = p.intensity;} break;
+			
+			}
+			
+			System.out.println("Value " + value + " " + p.intensity_CO + " " + p.intensity_NO);
+			
 			RadialGradient g = new RadialGradient(x, y, radius, Color.argb(
-					255, 60, 0, 0), Color.argb(255, 0, 0, 0),
+					255, value, 0, 0), Color.argb(255, 0, 0, 0),
 					TileMode.CLAMP);
 
             gp.setShader(null);

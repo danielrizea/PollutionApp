@@ -9,10 +9,19 @@ import java.util.Random;
  */
 public class PolutionPoint {
 	
+	
+	public static final int CO = 0;
+	public static final int NO = 1;
+	public static final int AIR_Q = 2;
+	public static final int ALL_GAS = 3;
+	
 	public double lat;
 	public double lon;
 	public int intensity;
 	
+	public int intensity_CO;
+	public int intensity_NO;
+	public int intensity_AirQ;
 	
 	public float sensor_1;
 	public float sensor_2;
@@ -20,12 +29,11 @@ public class PolutionPoint {
 	public float batteryVoltage;
 	public int timestamp;
 	public int id;
+	public int flag;
 	
 	public PolutionPoint(float lat, float lon, int intensity) {
 		this.lat = lat;
 		this.lon = lon;
-		//TODO random
-		this.intensity = calculatePollutionIntensityValue();
 	}
 	
 	public PolutionPoint(){
@@ -37,23 +45,27 @@ public class PolutionPoint {
 	}
 	
 	public int calculatePollutionIntensityValue(){
-		
-		int intensity = 0;
-		
+
+		/*
 		//random return object
 		Random rand = new Random();
 		return rand.nextInt(120);
-		
+		*/
 		//return intensity;
-		//this.intensity = (int)((sensor_1 * 255)/1024);
+		this.intensity_CO = (int) ((sensor_1 * 255)/1024);
+		this.intensity_NO = (int)((sensor_2  * 255)/1024);
+		this.intensity_AirQ = (int)((sensor_3 * 255)/1024);
 		
-		//return intensity;
+		//TODO figure out a better formula to calculate overall point intensity
+		this.intensity = (this.intensity_CO + this.intensity_AirQ + this.intensity_NO)/3;
+		
+		return this.intensity;
 	}
 	
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
-		return "[ lat:" + lat +" lon:" + lon +" sensors:" + sensor_1 + ", " + sensor_2 + ", " + sensor_3 + ", " + batteryVoltage + ", intensity:" +intensity + ", timestamp " + timestamp + " ]" ; 
+		// toString custom method
+		return "[ lat:" + lat +" lon:" + lon +" sensors:" + sensor_1 + ", " + sensor_2 + ", " + sensor_3 + ", " + batteryVoltage + ", intensity: ["+ intensity_CO + ", " + intensity_NO +", " + intensity_AirQ + ", " +intensity + "], timestamp " + timestamp + " ]" ; 
 	}
 	public static double getDistance(double lat1, double lon1, double lat2,double lon2){
 		

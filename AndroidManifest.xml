@@ -15,9 +15,9 @@
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <uses-library android:name="com.google.android.maps" />
         <!-- Service declaration   -->
-        <service android:name="com.polution.database.ServiceDataUpload">
+        <service android:name="com.polution.database.ServiceDataUpload" android:process=":processUploadData">
         </service>
-        <service android:name="com.polution.bluetooth.QueryService">
+        <service android:name="com.polution.bluetooth.QueryService" android:process=":processQuerySensor">
         </service>
         
         <!-- Broadcast receiver to check network status -->

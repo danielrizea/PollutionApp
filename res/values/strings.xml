@@ -73,4 +73,11 @@
     <string name="show_points">Show points</string>
     <string name="add_point">Store sensor values</string>
     
+    <string name="spinner_gas_prompt">Chose gas</string>
+    
+    <!-- Compass -->
+    <string name="cardinal_north">N</string>
+    <string name="cardinal_east">E</string>
+    <string name="cardinal_south">S</string>
+    <string name="cardinal_west">W</string>
 </resources>

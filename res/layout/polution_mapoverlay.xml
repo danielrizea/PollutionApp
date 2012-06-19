@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:orientation="vertical"
   android:layout_width="match_parent"
   android:layout_height="match_parent">
   
-    <TextView 
-     android:id="@+id/location_coordinates"
-     android:layout_width="fill_parent"
-     android:layout_height="wrap_content"   
-        />
-    
-    <com.polution.map.SimpleMapView
+      <com.polution.map.SimpleMapView
 				 xmlns:android="http://schemas.android.com/apk/res/android"
 				 android:id="@+id/mapview_polutionoverlay"	
                  android:layout_width="match_parent"
@@ -19,4 +13,31 @@
                  android:clickable="true"
                  android:layout_weight="1"
                  android:apiKey="0d2yLfG2hHgdRc2GPnQ9D6djdh1vAft8oJPEu_g"/>
-</LinearLayout>
+      
+    <TextView 
+     android:id="@+id/location_coordinates"
+     android:layout_width="fill_parent"
+     android:layout_height="wrap_content"   
+        />
+    
+    <TextView 
+     android:id="@+id/shown_gas"
+     android:layout_width="wrap_content"
+     android:layout_height="wrap_content"
+     android:textSize="24dip"
+     android:textStyle="bold"
+     android:textColor="@color/gas_map_text_color"
+     android:paddingLeft="14dip"
+     android:paddingTop="14dip" 
+        />
+    
+	<Spinner 
+	    android:id="@+id/spinner_choose_gas"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:prompt="@string/spinner_gas_prompt"
+        android:layout_alignBottom="@id/mapview_polutionoverlay"
+        android:layout_centerHorizontal="true"
+	    />
+    
+</RelativeLayout>

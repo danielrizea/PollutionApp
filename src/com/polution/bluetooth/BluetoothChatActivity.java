@@ -287,6 +287,7 @@ public class BluetoothChatActivity extends MapActivity {
     @Override
     public void onStop() {
         super.onStop();
+        myLocationManager.removeUpdates(myLocListener);
         if(D) Log.e(TAG, "-- ON STOP --");
     }
 

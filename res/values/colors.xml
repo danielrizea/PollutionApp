@@ -24,4 +24,16 @@
     <color name="background2">#ffd5ddeb</color>
     <color name="background3">#ffe3e8f1</color>
     <color name="title_separator">#40ffffff</color>
+    
+    <color name="gas_map_text_color">#FF0000 </color>
+    
+    <!-- Compass colors -->
+    <color name="default_border">#33FFCC00</color>    
+    <color name="exit_color">#00FF00</color>
+    <color name="backgroundColor">#3d6b99</color>
+    <color name="background_color">#EEEE</color>
+	<color name="marker_color">#A000</color>
+	<color name="text_color">#A000</color>
+	<color name="cardinal_color">#000000</color>
+	<color name="cardinal_color_north">#FF0000</color>
 </resources>

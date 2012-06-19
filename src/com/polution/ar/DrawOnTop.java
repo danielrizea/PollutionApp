@@ -67,7 +67,7 @@ public class DrawOnTop extends View{
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mBitmap != null)
+    	if (mBitmap != null)
         {
         	int canvasWidth = canvas.getWidth();
         	int canvasHeight = canvas.getHeight();
