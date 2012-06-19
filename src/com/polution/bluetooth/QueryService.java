@@ -202,13 +202,10 @@ public class QueryService extends IntentService{
                    PolutionPoint p = decodeMessageRead(readMessage);
                    if(D) Log.d(TAG,"Point received from sensor");
                    
-                   //mChatService.stop();
+                   mChatService.stop();
                    mBluetoothAdapter.disable();
                    
                    Location myLoc = myLocationManager.getLastKnownLocation(mCurrentProvider);
-                   
-                   Log.d(TAG,"Prepare to add point");
-                   
                    
                    if(myLoc != null){
                 	   if(!myLoc.equals(lastLocation)){
@@ -223,7 +220,7 @@ public class QueryService extends IntentService{
                 	   }
                    }
                    lastLocation = myLoc;
-                   mChatService.stop();
+                   //mChatService.stop();
                    System.out.println("Point " + p.toString());
                    break;
                case MESSAGE_DEVICE_NAME:

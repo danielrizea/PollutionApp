@@ -29,6 +29,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.RadialGradient;
 import android.graphics.Shader.TileMode;
 import android.view.MotionEvent;
@@ -65,7 +67,10 @@ public class HeatMapOverlay extends Overlay {
 		}
 		
 	}
-
+	/**
+	 * Does not draw the hitmap 
+	 *
+	 */
 	@Override
 	public boolean onTouchEvent(MotionEvent e, MapView mapView) {
 		
@@ -97,10 +102,15 @@ public class HeatMapOverlay extends Overlay {
 		private int height;
 		private float radius;
 		private List<PolutionPoint> points;
+
+		private Bitmap auxBuffer;
+		private Canvas auxCanvas;
 		
 		public HeatTask(int width, int height, float radius, List<PolutionPoint> points){
 			backbuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+			auxBuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 			myCanvas = new Canvas(backbuffer);
+			auxCanvas = new Canvas(auxBuffer);
 			Paint p = new Paint();
 			p.setStyle(Paint.Style.FILL);
 			p.setColor(Color.TRANSPARENT);
@@ -108,20 +118,134 @@ public class HeatMapOverlay extends Overlay {
 			this.height = height;
 			this.points = points;
 			myCanvas.drawRect(0, 0, width, height, p);
+			auxCanvas.drawRect(0,0, width, height, p);
 			this.radius = radius;
+			
+			System.out.println("Out " + radius +" " + width +" "+ height);
 		}
+	
+		synchronized public void putCircleMask(int xoff, int yoff, int radius, int[] pixels ){	
+			  
+			  int w = 2*(radius+2);
+			  int mask[][] = new int[w][w];	
+			
+			  int x0 = radius +1;
+			  int y0 = radius +1;
+			  
+			  
+			  int f = 1 - radius;
+			  int ddF_x = 1;
+			  int ddF_y = -2 * radius;
+			  int x = 0;
+			  int y = radius;
+			  //System.out.println( " bounds " + x0 + " " + y0 + " " + y0+radius + " w: " + w );
+			  
+			  mask[x0][ y0+radius]= 1;
+					  //(x0, y0 + radius);
+			  mask[x0][ y0-radius]= 1;
+					  //(x0, y0 - radius);
+			  
+			  mask[(x0 + radius)][ y0]= 1;
+					  //(x0 + radius, y0);
+			  mask[(x0 - radius)][ y0]= 1;
+			  		  //(x0 - radius, y0);
+			 
+			  while(x < y)
+			  {
+			    // ddF_x == 2 * x + 1;
+			    // ddF_y == -2 * y;
+			    // f == x*x + y*y - radius*radius + 2*x - y + 1;
+			    if(f >= 0) 
+			    {
+			      y--;
+			      ddF_y += 2;
+			      f += ddF_y;
+			    }
+			    x++;
+			    ddF_x += 2;
+			    f += ddF_x;    
+			    mask[x0 + x][y0 + y] = 1;
+			    mask[x0 - x][y0 + y] = 1;
+			    mask[x0 + x][y0 - y] = 1;
+			    mask[x0 - x][y0 - y] = 1;
+			    mask[x0 + y][y0 + x] = 1;
+			    mask[x0 - y][y0 + x] = 1;
+			    mask[x0 + y][y0 - x] = 1;
+			    mask[x0 - y][y0 - x] = 1;
+			  }
+			 // System.out.println();
+			  
+			  for(int i=0;i<w;i++){
+				  boolean fill = false;
+				  
+				  for(int j=0;j<w;j++){
+					  if(mask[i][j] == 1 && j<w/2)
+						  fill = true;
+					  else
+						  if(mask[i][j] == 1 && j > w/2)
+							  fill = false;
+					  
+					  if(fill){
+						  mask[i][j] = 1;
+					  	}
+					  //System.out.print(mask[i][j]);
+				  }
+				 // System.out.println();
+			  }
+			  
+			  
+			  for(int i=0;i<w;i++)
+				  for(int j=0;j<w;j++){
+					  if(mask[i][j] == 1)
+						  if(mask[i][j] == 1){					  
+							  mask[i][j] = 255 -(255/radius+1)* (Math.abs(x0-i) + Math.abs(y0 - j));
+							 
+							  if(mask[i][j]< 0)
+								  mask[i][j] = 0;
+					  	}
+				  }
+			  
+			  //System.out.println();
+			  System.out.println(" X y " + xoff + " " + yoff + " ");
+			  for(int i=0;i<w;i++){
+				  for(int j=0;j<w;j++){
+					  
+					  if((xoff-w/2+i)*width + (yoff+j) > 0 && (xoff-w/2+i)*width + (yoff+j) < pixels.length)
+						  if(pixels[(xoff-w/2+i)*width + (yoff+j)] < mask[i][j])
+							  pixels[(xoff-w/2+i)*width + (yoff+j)] =   mask[i][j];
+					  
+					  //linear_mask[i*w+j] = mask[i][j]; 
+					 //System.out.print(" " + mask[i][j]);
+				  }
+				//System.out.println();
+			  }
+			  
+			  return;
+		}
+		
 		
 		@Override
 		public void run() {
 			Projection proj = mapView.getProjection();
 			
+			int[] pixels = new int[(int) (this.width * this.height)];
+			backbuffer.getPixels(pixels, 0, this.width, 0, 0, this.width,
+					this.height);
+			
+			
 			Point out = new Point(1, 1);
+			Paint gp = new Paint();
 			for(PolutionPoint p : points){
 				GeoPoint in = new GeoPoint((int)(p.lat*1E6),(int)(p.lon*1E6));
 				proj.toPixels(in, out);
-				addPoint(out.x, out.y, p.intensity);
+				addPoint(out.x, out.y, p.intensity,gp);
+				//putCircleMask(out.y, out.x, (int)radius, pixels);
 			}
+			//putCircleMask(out.x, out.y, (int)radius, pixels);
+			System.out.println("Finish display");
+			
 			colorize(0, 0);
+			
 			lock.lock();
 			layer = backbuffer;
 			lock.unlock();
@@ -129,27 +253,41 @@ public class HeatMapOverlay extends Overlay {
 		}
 		
 		
-		private void addPoint(float x, float y, int times) {
+		private void addPoint(float x, float y, int times, Paint gp) {
+	
 			RadialGradient g = new RadialGradient(x, y, radius, Color.argb(
-					Math.max(10 * times, 255), 0, 0, 0), Color.TRANSPARENT,
+					255, 60, 0, 0), Color.argb(255, 0, 0, 0),
 					TileMode.CLAMP);
-			Paint gp = new Paint();
+
+            gp.setShader(null);
 			gp.setShader(g);
+			//XOR is OK
+			
+			//but this is what we want  : [Sa + Da - Sa*Da, Sc*(1 - Da) + Dc*(1 - Sa) + max(Sc, Dc)] 
+			// where Sa, Da, are 1 and we get only the max of color from the two
+			gp.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.LIGHTEN));
 			myCanvas.drawCircle(x, y, radius, gp);
+
+			gp.setXfermode(null);
+
 		}
-		
+
 		private void colorize(float x, float y) {
 			int[] pixels = new int[(int) (this.width * this.height)];
 			backbuffer.getPixels(pixels, 0, this.width, 0, 0, this.width,
 					this.height);
-			
 
 			for (int i = 0; i < pixels.length; i++) {
 				int r = 0, g = 0, b = 0, tmp = 0;
-				int alpha = pixels[i] >>> 24;
+				//the coe has change, alfa here is the red value
+				int alpha = 255 & (pixels[i] >>> 16);
+				//if(alpha > 255 || alpha < 0 )
+
 				if (alpha == 0) {
+					pixels[i] = Color.argb((int) alpha / 2, r, g, b);
 					continue;
 				}
+				
 				if (alpha <= 255 && alpha >= 235) {
 					tmp = 255 - alpha;
 					r = 255 - tmp;
@@ -168,6 +306,7 @@ public class HeatMapOverlay extends Overlay {
 					b = 255;
 				} else
 					b = 255;
+				
 				pixels[i] = Color.argb((int) alpha / 2, r, g, b);
 			}
 			backbuffer.setPixels(pixels, 0, this.width, 0, 0, this.width,

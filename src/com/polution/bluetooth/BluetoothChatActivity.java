@@ -142,7 +142,7 @@ public class BluetoothChatActivity extends MapActivity {
 	final long MINIMUM_TIME_BETWEEN_UPDATE = 2000; // in Milliseconds
     
 	//zoom from 1 (large) - 21 (focus)
-    final int MAP_ZOOM_LEVEL = 16;
+    final int MAP_ZOOM_LEVEL = 18;
     
     private TextView providerNameTextView;
     

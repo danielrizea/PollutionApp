@@ -3,7 +3,6 @@ package com.polution.ar;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Random;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -22,19 +21,23 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ar.test.R;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
+import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
+import com.polution.bluetooth.QueryService;
 import com.polution.database.AlarmNotifier;
 import com.polution.database.DatabaseTools;
 import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
 import com.polution.map.HeatMapOverlay;
 import com.polution.map.SimpleMapView;
+import com.polution.map.SimpleMapView.OnLongpressListener;
 import com.polution.map.events.PanChangeListener;
 import com.polution.map.model.PolutionPoint;
 
@@ -83,7 +86,7 @@ public class PollutionMapActivity extends MapActivity {
 	protected MyLocationOverlay myLocationOverlay;
 	
 	private MyLocListener myLocListener;
-	
+	public static int ZOOM_LEVEL = 16;
 	// ===========================================================
 	// Extra-Classes
 	// ===========================================================
@@ -97,6 +100,7 @@ public class PollutionMapActivity extends MapActivity {
 	}
 	
 	
+	
 	@Override
 	protected void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
@@ -108,6 +112,8 @@ public class PollutionMapActivity extends MapActivity {
 		
 		
 		mapView = (SimpleMapView)findViewById(R.id.mapview_polutionoverlay);
+		
+		//set street level depth
 		this.overlay = new HeatMapOverlay(200, mapView);
 		mapView.getOverlays().add(overlay);
 		
@@ -116,15 +122,7 @@ public class PollutionMapActivity extends MapActivity {
 			@Override
 			public void onPan(GeoPoint old, GeoPoint current) {
 				
-				Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + mapView.getBounds()[0][0] + "/" + mapView.getBounds()[0][1] + "/" + mapView.getBounds()[1][0] + "/" + mapView.getBounds()[1][1]);
-				Cursor values = managedQuery(uri, null, null, null, null);
-				
-				List<PolutionPoint> points = DatabaseTools.getPointsInBounds(values);
-				
-				if(points.size() > 0){
-					overlay.update(points);
-				}
-				
+				updatePollutionOverlay();
 			}
 		});
 		
@@ -136,11 +134,30 @@ public class PollutionMapActivity extends MapActivity {
 		lat = 44.4;
 		longit = 26.1;
 
+		mapView.setOnLongpressListener(new OnLongpressListener() {
+			
+			@Override
+			public void onLongpress(MapView view, GeoPoint longpressLocation) {
+				// TODO Auto-generated method stub
+				float lat = (float)(longpressLocation.getLatitudeE6()/1E6);
+				float lon = (float)(longpressLocation.getLongitudeE6()/1E6);
+				
+				PolutionPoint point = new PolutionPoint(lat, lon);
+            	
+            	Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
+            	contentResolver.insert(uri, DatabaseTools.getContentValues(point));
+            	
+            	updatePollutionOverlay();
+            	
+            	Log.d(TAG, "Dummy point added " + lat +" " + lon + " " + point.intensity);
+			}
+		});
+		
 	//	findLocationAtCoordinates(lat, longit);
 
 		// Piata Unirii: (Lat, Longit) = (44.4, 26.1)
 
-	//	mc.setZoom(17);
+		mc.setZoom(ZOOM_LEVEL);
 	//	mapView.invalidate();
 		
 
@@ -166,16 +183,8 @@ public class PollutionMapActivity extends MapActivity {
         myLocationOverlay.runOnFirstFix(new Runnable() {
             public void run() {
                 mc.animateTo(myLocationOverlay.getMyLocation());
-                
-                
-            	Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + mapView.getBounds()[0][0] + "/" + mapView.getBounds()[0][1] + "/" + mapView.getBounds()[1][0] + "/" + mapView.getBounds()[1][1]);
-        		Cursor values = managedQuery(uri, null, null, null, null);
-        		
-        		List<PolutionPoint> points = DatabaseTools.getPointsInBounds(values);
-        		
-        		if(points.size() > 0){
-        			overlay.update(points);
-        		}
+             
+                updatePollutionOverlay();
                 
                 myLoc = myLocationOverlay.getMyLocation();
                 // 44.423115 26.115126
@@ -279,6 +288,32 @@ public class PollutionMapActivity extends MapActivity {
 
 	}
 	
+	private void updatePollutionOverlay(){
+		
+		List<PolutionPoint> points = new ArrayList<PolutionPoint>();
+		try{
+			Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + mapView.getBounds()[0][0] + "/" + mapView.getBounds()[0][1] + "/" + mapView.getBounds()[1][0] + "/" + mapView.getBounds()[1][1]);
+			Cursor values = managedQuery(uri, null, null, null, null);
+			
+			points = DatabaseTools.getPointsInBounds(values);
+			
+			values.close();
+		}catch(Exception e){};
+		
+	
+		/*for(int i=0;i<points.size();i++){
+			points.get(i).intensity = points.get(i).calculatePollutionIntensityValue();
+		Log.d(TAG, " Point pollution " + i +" " + points.get(i).intensity );	
+		}
+		*/
+		Log.d(TAG, "here");
+			
+		if(points.size() > 0){
+			overlay.update(points);
+		}
+
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
@@ -293,11 +328,17 @@ public class PollutionMapActivity extends MapActivity {
 		
 		switch(item.getItemId()){
 		
-		case R.id.delete_points : {
-		
-			Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/points/delete/point_table" );
-			contentResolver.delete(uri, null, null);
-		}
+			case R.id.delete_points : {
+			
+				Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/delete/point_table" );
+				contentResolver.delete(uri, null, null);
+			}break;
+			
+			case R.id.add_point : 
+			{
+				Intent serviceIntent = new Intent(this, QueryService.class);
+	 		   	startService(serviceIntent);
+			}break;
 		
 		}
 		
@@ -310,23 +351,12 @@ public class PollutionMapActivity extends MapActivity {
 			// TODO Auto-generated method stub
 			//do something 
 			mc.animateTo(myLocationOverlay.getMyLocation());
-			
-			//Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
-        	//contentResolver.insert(uri, DatabaseTools.getContentValues(point));
-			
-			Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + mapView.getBounds()[0][0] + "/" + mapView.getBounds()[0][1] + "/" + mapView.getBounds()[1][0] + "/" + mapView.getBounds()[1][1]);
-    		Cursor values = managedQuery(uri, null, null, null, null);
-    		
-    		List<PolutionPoint> points = DatabaseTools.getPointsInBounds(values);
     		
     		myLoc = new GeoPoint((int)(location.getLatitude()*1E6),(int)(location.getLongitude()*1E6));
  
     		currentPointCoordinates.setText("lat:" + (double)(myLoc.getLatitudeE6()/1E6) + " lon:" + (double)(myLoc.getLongitudeE6()/1E6));
-    		
-    		if(points.size() > 0){
-    			overlay.update(points);
-    		}
-        	
+
+        	updatePollutionOverlay();
 		}
 
 		@Override
@@ -371,7 +401,7 @@ public class PollutionMapActivity extends MapActivity {
 		public void onStatusChanged(String provider, int status, Bundle extras) {
 			// TODO Auto-generated method stub
 			
-		}	
+		}
 	}
 }
 

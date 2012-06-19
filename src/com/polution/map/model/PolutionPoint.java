@@ -24,7 +24,8 @@ public class PolutionPoint {
 	public PolutionPoint(float lat, float lon, int intensity) {
 		this.lat = lat;
 		this.lon = lon;
-		this.intensity = intensity;
+		//TODO random
+		this.intensity = calculatePollutionIntensityValue();
 	}
 	
 	public PolutionPoint(){
@@ -41,7 +42,10 @@ public class PolutionPoint {
 		
 		//random return object
 		Random rand = new Random();
-		return rand.nextInt(255);
+		return rand.nextInt(120);
+		
+		//return intensity;
+		//this.intensity = (int)((sensor_1 * 255)/1024);
 		
 		//return intensity;
 	}

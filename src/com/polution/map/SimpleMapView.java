@@ -24,6 +24,8 @@ package com.polution.map;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -42,6 +44,32 @@ public class SimpleMapView extends MapView {
 	private List<ZoomChangeListener> zoomEvents = new ArrayList<ZoomChangeListener>();
 	private List<PanChangeListener> panEvents = new ArrayList<PanChangeListener>();
 	
+	//longPress section
+    /**
+     * Time in ms before the OnLongpressListener is triggered.
+     */
+    static final int LONGPRESS_THRESHOLD = 500;
+ 
+    /**
+     * Keep a record of the center of the map, to know if the map
+     * has been panned.
+     */
+    private GeoPoint lastMapCenter;
+ 
+    private Timer longpressTimer = new Timer();
+    private SimpleMapView.OnLongpressListener longpressListener;
+    
+    // Define the interface we will interact with from our Map
+    public interface OnLongpressListener {
+    	public void onLongpress(MapView view, GeoPoint longpressLocation);
+    }
+    
+    public void setOnLongpressListener(SimpleMapView.OnLongpressListener listener) {
+        longpressListener = listener;
+    }
+    // end of custom longPress section
+    
+    
 	public SimpleMapView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 	}
@@ -72,7 +100,52 @@ public class SimpleMapView extends MapView {
 		return bounds;
 	}
 	
-	public boolean onTouchEvent(MotionEvent ev) {
+	public boolean onTouchEvent(final MotionEvent ev) {
+		
+		if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+            // Finger has touched screen.
+            longpressTimer = new Timer();
+            longpressTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    GeoPoint longpressLocation = getProjection().fromPixels((int)ev.getX(),
+                            (int)ev.getY());
+ 
+                    /*
+                     * Fire the listener. We pass the map location
+                     * of the longpress as well, in case it is needed
+                     * by the caller.
+                     */
+                    longpressListener.onLongpress(SimpleMapView.this, longpressLocation);
+                }
+ 
+            }, LONGPRESS_THRESHOLD);
+ 
+            lastMapCenter = getMapCenter();
+        }
+ 
+        if (ev.getAction() == MotionEvent.ACTION_MOVE) {
+ 
+            if (!getMapCenter().equals(lastMapCenter)) {
+                // User is panning the map, this is no longpress
+                longpressTimer.cancel();
+            }
+ 
+            lastMapCenter = getMapCenter();
+        }
+ 
+        if (ev.getAction() == MotionEvent.ACTION_UP) {
+            // User has removed finger from map.
+            longpressTimer.cancel();
+        }
+ 
+            if (ev.getPointerCount() > 1) {
+                        // This is a multitouch event, probably zooming.
+                longpressTimer.cancel();
+            }
+		
+		
+		
         if (ev.getAction() == MotionEvent.ACTION_UP) {
             GeoPoint centerGeoPoint = this.getMapCenter();
             if (currentCenter == null || 
@@ -82,6 +155,7 @@ public class SimpleMapView extends MapView {
             }
             currentCenter = this.getMapCenter();
         }
+        
         return super.onTouchEvent(ev);
     }
 

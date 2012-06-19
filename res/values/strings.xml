@@ -71,5 +71,6 @@
     <string name="delete_database">Delete database</string>
     <string name="detele_points">Delete all points </string>
     <string name="show_points">Show points</string>
+    <string name="add_point">Store sensor values</string>
     
 </resources>

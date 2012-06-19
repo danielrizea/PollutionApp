@@ -79,10 +79,12 @@ public class ServiceDataUpload extends IntentService{
 	      
 	      //idea dirty bit push data to server
 	      
+	      /*
 	      	Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + 0 + "/" + 90 + "/" + 0 + "/" + 90);
 			Cursor values = contentResolver.query(uri, null, null, null, null);
 			
 			List<PolutionPoint> points = DatabaseTools.getPointsInBounds(values);
+	      */
 	      
 	      Log.d(DEBUG_TAG, "Service started to do work");
 	      while (System.currentTimeMillis() < endTime) {
