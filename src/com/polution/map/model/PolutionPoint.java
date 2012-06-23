@@ -27,7 +27,7 @@ public class PolutionPoint {
 	public float sensor_2;
 	public float sensor_3;
 	public float batteryVoltage;
-	public int timestamp;
+	public long timestamp;
 	public int id;
 	public int flag;
 	

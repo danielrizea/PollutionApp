@@ -14,14 +14,39 @@
     	    android:title="Sensor Device MAC"
     	    android:summary="Choose the MAC of your sensor device"
     	    /> 
+    	 <CheckBoxPreference
+                android:key="prefer wifi"
+                android:title="Prefer WiFi" />
         
     </PreferenceCategory>
    
     <PreferenceScreen
             android:key="second_preferencescreen"
-            android:title="WiFi settings">
+            android:title="Sensor preferences">
+    <PreferenceCategory
+     android:title="Sensor alert preferences"   
+        > 
         <CheckBoxPreference
-                android:key="prefer wifi"
-                android:title="Prefer WiFi" />
+                android:key="enable_warnings"
+                android:title="Sensor Alerts"
+                android:summary="Enable device alert in case of level is over the set value.Please use the sliders below to ajust the maximum limit." />
+        
+        <com.polution.view.SeekBarPreference  
+                android:key="co_sensitivity"
+                android:defaultValue="32"
+                android:title="CO:"
+                 />      
+        <com.polution.view.SeekBarPreference  
+                android:key="no_sensitivity"
+                android:defaultValue="32"
+                android:title="NO:" 
+                /> 
+        <com.polution.view.SeekBarPreference  
+                android:key="air_q_sensitivity"
+                android:defaultValue="32"
+                android:title="Air_Q:"
+                /> 
+  
+        </PreferenceCategory>
     </PreferenceScreen>
 </PreferenceScreen> 

@@ -87,6 +87,7 @@ public class PollutionContentProvider extends ContentProvider {
     
     private static final int DELETE_POINT_TABLE = 5;
     
+    private static final int ALL_POINTS = 6;
     
     // UriMatcher
     /** The Constant uriMatcher. */
@@ -100,7 +101,7 @@ public class PollutionContentProvider extends ContentProvider {
 		uriMatcher.addURI(PROVIDER_NAME, "points/update/#", UPDATE_POINT);
 		
 		uriMatcher.addURI(PROVIDER_NAME, "points/delete/point_table",DELETE_POINT_TABLE);
-		
+		uriMatcher.addURI(PROVIDER_NAME, "points", ALL_POINTS);
 	}
    
 	//---for database use---
@@ -130,7 +131,7 @@ public class PollutionContentProvider extends ContentProvider {
 	   	                    
 	   		+ " (_id INTEGER PRIMARY KEY AUTOINCREMENT,lat REAL,"
 	   	                    
-	   		+ "lon REAL, timestamp INTEGER, intensity INTEGER , sensor_1_val REAL, sensor_2_val REAL, sensor_3_val REAL, battery_val REAL);";
+	   		+ "lon REAL, timestamp REAL, intensity INTEGER , sensor_1_val REAL, sensor_2_val REAL, sensor_3_val REAL, battery_val REAL);";
 	   	       
       		/**
       		 * Instantiates a new database helper.
@@ -196,7 +197,8 @@ public class PollutionContentProvider extends ContentProvider {
 		      		 return PROVIDER_NAME + "/points/update/#";
 		      	case DELETE_POINT_TABLE :
 		      		 return PROVIDER_NAME + "/points/delete/point_table";
-		      		 
+		      	case ALL_POINTS:
+		      		return PROVIDER_NAME + "/points";
 		        default:
 		            throw new IllegalArgumentException("Unsupported URI: " + uri);        
 		      }   
@@ -241,6 +243,13 @@ public class PollutionContentProvider extends ContentProvider {
 			    	  
 			    	  sqlBuilder.appendWhere("lat >= " + bounds[0][0]/1E6 + " AND lat <= " + bounds[1][0]/1E6 + " AND lon >= " + bounds[0][1]/1E6 + " AND lon <= " + bounds[1][1]/1E6);
 
+			    	  //if (sortOrder==null || sortOrder=="") sortOrder = "timestamp";
+			    	  break;
+			    	  
+			      case ALL_POINTS:
+			    	  
+			    	  sqlBuilder.setTables(DATABASE_TABLE_POINTS);
+			    	  
 			    	  //if (sortOrder==null || sortOrder=="") sortOrder = "timestamp";
 			    	  break;
   

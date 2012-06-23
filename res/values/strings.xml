@@ -80,4 +80,8 @@
     <string name="cardinal_east">E</string>
     <string name="cardinal_south">S</string>
     <string name="cardinal_west">W</string>
+    
+    <string name="view_points">view points</string>
+    <string name="load_database">load database</string>
+    <string name="save_database">save database</string>
 </resources>

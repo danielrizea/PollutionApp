@@ -1,4 +1,4 @@
-package com.polution.ar;
+package com.polution.map;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +36,6 @@ import com.polution.bluetooth.QueryService;
 import com.polution.database.DatabaseTools;
 import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
-import com.polution.map.HeatMapOverlay;
-import com.polution.map.SimpleMapView;
 import com.polution.map.SimpleMapView.OnLongpressListener;
 import com.polution.map.events.PanChangeListener;
 import com.polution.map.model.PolutionPoint;
@@ -45,7 +43,7 @@ import com.polution.map.model.PolutionPoint;
 public class PollutionMapActivity extends MapActivity {
 
 	//private DBHelper database;
-	private HeatMapOverlay overlay;
+	private PollutionMapOverlay overlay;
 	private ContentResolver contentResolver;
 	
 	private static String TAG = "PollutionMapActivity";
@@ -121,7 +119,7 @@ public class PollutionMapActivity extends MapActivity {
 		selectedGas = (TextView)findViewById(R.id.shown_gas);
 		
 		//set street level depth
-		this.overlay = new HeatMapOverlay(200, mapView);
+		this.overlay = new PollutionMapOverlay(200, mapView);
 		mapView.getOverlays().add(overlay);
 		
 		mapView.addPanChangeListener(new PanChangeListener() {
@@ -303,6 +301,7 @@ public class PollutionMapActivity extends MapActivity {
 		}catch(Exception e){};
 
 
+		
 		if(points.size() > 0){
 			overlay.update(points,selectedFlagForDesplay);
 		}
@@ -335,6 +334,11 @@ public class PollutionMapActivity extends MapActivity {
 	 		   	startService(serviceIntent);
 			}break;
 		
+			case R.id.view_points:
+			{
+				Intent viewPoints = new Intent(this,ViewPointsListView.class);
+				startActivity(viewPoints);
+			}break;
 		}
 		
 		return super.onOptionsItemSelected(item);

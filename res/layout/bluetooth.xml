@@ -68,7 +68,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="20sp"
-            android:text="S 1 :"
+            android:text="CO:"
           />
         
         <TextView 
@@ -82,7 +82,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="20sp"
-            android:text="S 2:"
+            android:text="NO:"
           />
         
         <TextView 
@@ -105,7 +105,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="20sp"
-            android:text="S 3:"
+            android:text="Air Q:"
           />
         
         <TextView 

@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.polution.database.DatabaseTools;
 import com.polution.database.PollutionContentProvider;
@@ -202,25 +203,27 @@ public class QueryService extends IntentService{
                    PolutionPoint p = decodeMessageRead(readMessage);
                    if(D) Log.d(TAG,"Point received from sensor");
                    
-                   mChatService.stop();
-                   mBluetoothAdapter.disable();
-                   
                    Location myLoc = myLocationManager.getLastKnownLocation(mCurrentProvider);
                    
                    if(myLoc != null){
                 	   if(!myLoc.equals(lastLocation)){
 	                	   p.lat = myLoc.getLatitude();
 	                	   p.lon = myLoc.getLongitude();
-	                	   p.timestamp = (int)System.currentTimeMillis();
+	                	   p.timestamp = System.currentTimeMillis();
 	                	   p.calculatePollutionIntensityValue();
 	                	   
 	                	   Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
 	                	   contentResolver.insert(uri, DatabaseTools.getContentValues(p));
 	                	   Log.d(TAG,"Add point " + p);		
+	                	   Toast.makeText(getApplicationContext(), "Add point to database", Toast.LENGTH_SHORT).show();
                 	   }
                    }
                    lastLocation = myLoc;
-                   //mChatService.stop();
+
+                   //disable the threads in here.
+                   
+                   mChatService.stop();
+                   mBluetoothAdapter.disable();
                    System.out.println("Point " + p.toString());
                    break;
                case MESSAGE_DEVICE_NAME:

@@ -63,7 +63,7 @@ import com.polution.database.AlarmNotifier;
 import com.polution.database.DatabaseTools;
 import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
-import com.polution.map.HeatMapOverlay;
+import com.polution.map.PollutionMapOverlay;
 import com.polution.map.SimpleMapView;
 import com.polution.map.model.PolutionPoint;
 
@@ -117,7 +117,7 @@ public class BluetoothChatActivity extends MapActivity {
     
     //---------------------- Pollution Map Components -------------------------------------//
     
-	private HeatMapOverlay overlay;
+	private PollutionMapOverlay overlay;
 	MapController mc;
 	SimpleMapView mapView;
 	GeoPoint p;
@@ -180,7 +180,7 @@ public class BluetoothChatActivity extends MapActivity {
 		this.providerNameTextView = (TextView) findViewById(R.id.provider_name);
 		System.out.println(mapView);
 		
-		this.overlay = new HeatMapOverlay(200, mapView);
+		this.overlay = new PollutionMapOverlay(200, mapView);
 		
 		mapView.getOverlays().add(overlay);
 		
@@ -446,7 +446,7 @@ public class BluetoothChatActivity extends MapActivity {
     						point.sensor_2 = Float.parseFloat(val2);
     						point.sensor_3 = Float.parseFloat(val3);
     						point.batteryVoltage = Float.parseFloat(battery);
-    						
+    						point.timestamp = System.currentTimeMillis();
     						// Or use LocationManager.GPS_PROVIDER
 
     						Location lastKnownLocation = myLocationManager.getLastKnownLocation(mCurrentProvider);
@@ -459,7 +459,7 @@ public class BluetoothChatActivity extends MapActivity {
     						Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
     	                	contentResolver.insert(uri, DatabaseTools.getContentValues(point));
     	                	Log.d("debug","Point added " + point.lat + " " + point.lon );
-    						Toast.makeText(this, "Point saved", Toast.LENGTH_SHORT);
+    						Toast.makeText(this, "Point saved " + point, Toast.LENGTH_LONG).show();
     						
     						return true;
     						
@@ -575,12 +575,6 @@ public class BluetoothChatActivity extends MapActivity {
              
              am.cancel(sender);
              Log.d(TAG,"Stop sampling");
-        }
-        
-        case R.id.delete_points : {
-        	
-			Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/delete/point_table" );
-			contentResolver.delete(uri, null, null);
         }
         
         }

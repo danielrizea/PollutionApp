@@ -4,4 +4,6 @@
           android:title="@string/delete_database"/>
     <item android:id="@+id/add_point"
           android:title="@string/add_point"/>
+    <item android:id="@+id/view_points"
+          android:title="@string/view_points"/>
 </menu>

@@ -19,9 +19,9 @@ import android.widget.Button;
 
 import com.ar.test.R;
 import com.polution.ar.ARView;
-import com.polution.ar.PollutionMapActivity;
 import com.polution.bluetooth.BluetoothChatActivity;
 import com.polution.database.AlarmNotifier;
+import com.polution.map.PollutionMapActivity;
 
 /**
  * The Class DashboardActivity.

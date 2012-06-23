@@ -1,24 +1,4 @@
-/*
- * Copyright (C) 2011 by Vinicius Carvalho (vinnie@androidnatic.com)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+
 package com.polution.map;
 
 import java.util.List;
@@ -42,18 +22,17 @@ import com.google.android.maps.Projection;
 import com.polution.map.model.PolutionPoint;
 
 /**
- * @author Vinicius Carvalho
- * An overlay that draws a heatmap using a set of HeatPoints provided at the update method.
- *
+ * An overlay that draws a Pollution Map based using the concept of a value heat map.
+ * The Class was inspired by the density heat map class of the mapex project
  */
-public class HeatMapOverlay extends Overlay {
+public class PollutionMapOverlay extends Overlay {
 	
 	private Bitmap layer;
 	private float radius;
 	private MapView mapView;
 	private ReentrantLock lock;
 	
-	public HeatMapOverlay(float radius, MapView mapview){
+	public PollutionMapOverlay(float radius, MapView mapview){
 		this.radius = radius;
 		this.mapView = mapview;
 		this.lock = new ReentrantLock();
@@ -119,7 +98,7 @@ public class HeatMapOverlay extends Overlay {
 			this.flag = flag;
 			this.radius = radius;
 			
-			System.out.println("Out " + radius +" " + width +" "+ height);
+			//System.out.println("Out " + radius +" " + width +" "+ height);
 		}
 	
 		synchronized public void putCircleMask(int xoff, int yoff, int radius, int[] pixels ){	
@@ -270,9 +249,9 @@ public class HeatMapOverlay extends Overlay {
 
             gp.setShader(null);
 			gp.setShader(g);
-			//XOR is OK
+			//XOR is OK but we can do better
 			
-			//but this is what we want  : [Sa + Da - Sa*Da, Sc*(1 - Da) + Dc*(1 - Sa) + max(Sc, Dc)] 
+			//this is what we want  : [Sa + Da - Sa*Da, Sc*(1 - Da) + Dc*(1 - Sa) + max(Sc, Dc)] 
 			// where Sa, Da, are 1 and we get only the max of color from the two
 			gp.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.LIGHTEN));
 			myCanvas.drawCircle(x, y, radius, gp);
