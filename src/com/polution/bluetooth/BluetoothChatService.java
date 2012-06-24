@@ -334,7 +334,7 @@ public class BluetoothChatService {
             
             while (true) {
                 try {
-                	
+
                 	if(mmInStream.available() > 0){
                     // Read from the InputStream
                 		bytes = mmInStream.read(buffer);
@@ -410,8 +410,6 @@ public class BluetoothChatService {
         public void cancel() {
             try {
             	Log.d(TAG,"close() of connect socked succeded on Connected Thread");
-            	mmInStream.close();
-            	mmOutStream.close();
                 mmSocket.close();
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);

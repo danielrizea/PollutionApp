@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
         xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:custom="http://schemas.android.com/apk/res/com.pollution"
         android:key="first_preferencescreen">
     <PreferenceCategory
      android:title="My preference category"   
@@ -34,16 +35,25 @@
         <com.polution.view.SeekBarPreference  
                 android:key="co_sensitivity"
                 android:defaultValue="32"
+				custom:max="500"
+				custom:min="0"
+				custom:step="25"
                 android:title="CO:"
                  />      
         <com.polution.view.SeekBarPreference  
                 android:key="no_sensitivity"
                 android:defaultValue="32"
+                custom:max="2000"
+				custom:min="0"
+				custom:step="200"
                 android:title="NO:" 
                 /> 
         <com.polution.view.SeekBarPreference  
                 android:key="air_q_sensitivity"
                 android:defaultValue="32"
+                custom:max="100"
+				custom:min="0"
+				custom:step="25"
                 android:title="Air_Q:"
                 /> 
   

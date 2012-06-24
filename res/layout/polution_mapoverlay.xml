@@ -39,5 +39,30 @@
         android:layout_alignBottom="@id/mapview_polutionoverlay"
         android:layout_centerHorizontal="true"
 	    />
+	<ImageView 
+	    android:id="@+id/map_scale_image"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:src="@drawable/scale"
+	    android:layout_alignRight="@id/mapview_polutionoverlay"
+	    android:layout_centerVertical="true"
+	    />
+	
+	<TextView 
+	    android:id="@+id/maxScaleValue"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignRight="@id/map_scale_image"
+	    android:layout_above="@id/map_scale_image"
+	    android:textColor="@color/text_scale"
+	    />
+	<TextView 
+	    android:id="@+id/minScaleValue"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignRight="@id/map_scale_image"
+	    android:layout_below="@id/map_scale_image" 
+	    android:textColor="@color/text_scale"
+	    />
     
 </RelativeLayout>

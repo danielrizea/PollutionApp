@@ -17,7 +17,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
-import com.ar.test.R;
+import com.pollution.R;
 import com.polution.ar.ARView;
 import com.polution.bluetooth.BluetoothChatActivity;
 import com.polution.database.AlarmNotifier;

@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.ContentResolver;
@@ -23,7 +26,8 @@ import android.widget.Toast;
 
 import com.polution.database.DatabaseTools;
 import com.polution.database.PollutionContentProvider;
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.PollutionMapActivity;
+import com.polution.map.model.PollutionPoint;
 
 public class QueryService extends IntentService{
 
@@ -132,7 +136,8 @@ public class QueryService extends IntentService{
 			
 			Log.d(TAG,"Connect with " + mChatService);
 			mChatService.connect(device);
-		}
+		}else
+			Log.d(TAG, "No device mac");
 
 	}
 
@@ -160,7 +165,7 @@ public class QueryService extends IntentService{
        mBluetoothAdapter = null;
        */
        
-       
+       private static final int HELLO_ID = 1;
        // The Handler that gets information back from the BluetoothChatService
        private final Handler mHandler = new Handler() {
            @Override
@@ -173,7 +178,7 @@ public class QueryService extends IntentService{
                    case BluetoothChatService.STATE_CONNECTED:
                        if(D) Log.d(TAG,"Connected to " + mConnectedDeviceName);
                        //stop connection
-                       sendMessage(PolutionDeviceConstants.MESSAGE_QUERY_DEVICE);
+                       sendMessage(PollutionSensor.MESSAGE_QUERY_DEVICE);
                        
                        break;
                        
@@ -200,10 +205,36 @@ public class QueryService extends IntentService{
                    
                    //logic to get message
                    
-                   PolutionPoint p = decodeMessageRead(readMessage);
+                   PollutionPoint p = decodeMessageRead(readMessage);
                    if(D) Log.d(TAG,"Point received from sensor");
                    
                    Location myLoc = myLocationManager.getLastKnownLocation(mCurrentProvider);
+                   
+                   
+                   if(p.sensor_1>250){
+	                   //notification 
+	                   String ns = Context.NOTIFICATION_SERVICE;
+	                   NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+	                   
+	                   int icon = android.R.drawable.btn_minus;
+	                   CharSequence tickerText = "Hello";
+	                   long when = System.currentTimeMillis();
+
+	                   Notification notification = new Notification(icon, tickerText, when);
+	                   
+	                   Context context = getApplicationContext();
+	                   CharSequence contentTitle = "CO alert";
+	                   CharSequence contentText = "The CO concentration has breached the 250ppm barier";
+	                   Intent notificationIntent = new Intent(getApplicationContext(), PollutionMapActivity.class);
+	                   PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+
+	                   notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+	                   
+
+
+	                   mNotificationManager.notify(HELLO_ID, notification);
+	                   sendMessage(PollutionSensor.MESSAGE_BEEP_START);
+                   }
                    
                    if(myLoc != null){
                 	   if(!myLoc.equals(lastLocation)){
@@ -257,31 +288,34 @@ public class QueryService extends IntentService{
         * protocol : ~val1|val2|val3|batteryStatus 
         * gets different values and post's the on screen
         */
-       private PolutionPoint decodeMessageRead(String readMessage){
+       private PollutionPoint decodeMessageRead(String readMessage){
 
        	StringTokenizer st = new StringTokenizer(readMessage,"~| ");
        	
-       	PolutionPoint point = new PolutionPoint();
+       	PollutionPoint point = new PollutionPoint();
        	
        	if(st.hasMoreTokens()){
        		
        		String val1 = st.nextToken();
-       		Log.d("Message"," String1:"+val1 );
+       		//Log.d("Message"," String1:"+val1 );
 
        			if(st.hasMoreTokens()){
        				String val2 = st.nextToken();
-       				Log.d("Message"," String2:"+val2 );
+       				//Log.d("Message"," String2:"+val2 );
 
        				if(st.hasMoreTokens()){
        					String val3 = st.nextToken();
-       					Log.d("Message"," String3:"+val3 );
+       					//Log.d("Message"," String3:"+val3 );
 
        					if(st.hasMoreTokens()){
        						String battery = st.nextToken();
-       						Log.d("Message"," String4:"+battery );
+       						//Log.d("Message"," String4:"+battery );
 
 
-       						point.sensor_1 = Float.parseFloat(val1);
+       						float CO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val1), PollutionSensor.CO_Rs, point.batteryVoltage);
+    						float co_ppm = PollutionSensor.getSensorValue(PollutionSensor.CO_SENSOR, CO_Rx); 
+    						point.sensor_1 = co_ppm;
+    						
        						point.sensor_2 = Float.parseFloat(val2);
        						point.sensor_3 = Float.parseFloat(val3);
        						point.batteryVoltage = Float.parseFloat(battery);
@@ -302,6 +336,7 @@ public class QueryService extends IntentService{
 
        }
  
+       
    	private Boolean setupForLocationAutoUPDATES() {
 		/*
 		 * Register with out LocationManager to send us an intent (whos

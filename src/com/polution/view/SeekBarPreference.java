@@ -1,8 +1,11 @@
 package com.polution.view;
 
+import com.pollution.R;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.preference.Preference;
 import android.util.AttributeSet;
@@ -18,8 +21,8 @@ public class SeekBarPreference extends Preference
                           implements OnSeekBarChangeListener{
 
  
- public static int maximum    = 100;
- public static int interval   = 5;
+ int maximum    = 100;
+ int interval   = 5;
  
  private float oldValue = 50;
  private TextView monitorBox;
@@ -31,16 +34,71 @@ public class SeekBarPreference extends Preference
 	 
 	 public SeekBarPreference(Context context, AttributeSet attrs) {
 	  super(context, attrs);
+	  
+	  TypedArray a = getContext().obtainStyledAttributes(attrs,R.styleable.SeekBarPreference);
+		 
+		final int N = a.getIndexCount();
+		for (int i = 0; i < N; ++i)
+		{
+		    int attr = a.getIndex(i);
+		    switch (attr)
+		    {
+		        case R.styleable.SeekBarPreference_defaultValue:
+		           // String myText = a.getString(attr);
+		           
+		            break;
+		        case R.styleable.SeekBarPreference_max:
+		            this.maximum = a.getInt(attr, 100);
+		            System.out.println("Value " + this.maximum);
+		            break;
+		        case R.styleable.SeekBarPreference_min:
+		            //String onAction = a.getString(attr);
+		            break;
+		            
+		        case R.styleable.SeekBarPreference_step:
+		            this.interval = a.getInt(attr,5);
+		            break;
+		    }
+		}
+		a.recycle();
 	 }
 	 
 	 public SeekBarPreference(Context context, AttributeSet attrs, int defStyle) {
 	  super(context, attrs, defStyle);
+	  TypedArray a = getContext().obtainStyledAttributes(attrs,R.styleable.SeekBarPreference);
+		 
+		final int N = a.getIndexCount();
+		for (int i = 0; i < N; ++i)
+		{
+		    int attr = a.getIndex(i);
+		    switch (attr)
+		    {
+		        case R.styleable.SeekBarPreference_defaultValue:
+		           // String myText = a.getString(attr);
+		           
+		            break;
+		        case R.styleable.SeekBarPreference_max:
+		            this.maximum = a.getInt(attr, 100);
+		            System.out.println("Value " + this.maximum);
+		            break;
+		        case R.styleable.SeekBarPreference_min:
+		            //String onAction = a.getString(attr);
+		            break;
+		            
+		        case R.styleable.SeekBarPreference_step:
+		            this.interval = a.getInt(attr,5);
+		            break;
+		    }
+		}
+		a.recycle();
 	 }
 	   
 	 @Override
 	 protected View onCreateView(ViewGroup parent){
 	  
 	   LinearLayout layout = new LinearLayout(getContext());
+	   
+	 
 	   
 	   LinearLayout.LayoutParams params1 = new LinearLayout.LayoutParams(
 	                                       LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -79,7 +137,7 @@ public class SeekBarPreference extends Preference
 	   bar.setOnSeekBarChangeListener(this);
 	   
 	   this.monitorBox = new TextView(getContext());
-	   this.monitorBox.setTextSize(12);
+	   this.monitorBox.setTextSize(14);
 	   this.monitorBox.setTypeface(Typeface.MONOSPACE, Typeface.ITALIC);
 	   this.monitorBox.setLayoutParams(params3);
 	   this.monitorBox.setPadding(2, 5, 0, 0);
@@ -108,6 +166,9 @@ public class SeekBarPreference extends Preference
 	    seekBar.setProgress(progress);
 	    this.oldValue = progress;
 	    this.monitorBox.setText(progress+"");
+	  
+	    
+	    
 	    updatePreference(progress);
 	  
 	    notifyChanged();

@@ -10,7 +10,7 @@ import org.xmlpull.v1.XmlSerializer;
 
 import android.util.Xml;
 
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.model.PollutionPoint;
 
 public class XMLProtocol {
 
@@ -23,7 +23,7 @@ public class XMLProtocol {
 	public static final String TIMESTAMP = "timestamp";
 	
 	
-	public static String retrieveXMLData(List<PolutionPoint> points){
+	public static String retrieveXMLData(List<PollutionPoint> points){
 
 		    XmlSerializer serializer = Xml.newSerializer();
 		    StringWriter writer = new StringWriter();
@@ -32,7 +32,7 @@ public class XMLProtocol {
 		        serializer.startDocument("UTF-8", true);
 		        serializer.startTag("", "pollution_points");
 		        serializer.attribute("", "number", String.valueOf(points.size()));
-		        for (PolutionPoint p: points){
+		        for (PollutionPoint p: points){
 		            serializer.startTag("", POINT);
 		            serializer.startTag("", LAT);
 		            serializer.text(p.lat+"");
@@ -70,16 +70,16 @@ public class XMLProtocol {
 		    } 
 		}
 	
-	public static List<PolutionPoint> parseXMLDocument(InputStream inStream){
+	public static List<PollutionPoint> parseXMLDocument(InputStream inStream){
 		
-		ArrayList<PolutionPoint> points = new ArrayList<PolutionPoint>();
+		ArrayList<PollutionPoint> points = new ArrayList<PollutionPoint>();
 		
 		 XmlPullParser parser = Xml.newPullParser();
 	        try {
 	            // auto-detect the encoding from the stream
 	            parser.setInput(inStream, null);
 	            int eventType = parser.getEventType();
-	            PolutionPoint p = null;
+	            PollutionPoint p = null;
 	            boolean done = false;
 	            while (eventType != XmlPullParser.END_DOCUMENT && !done){
 	            	
@@ -91,7 +91,7 @@ public class XMLProtocol {
 	                    case XmlPullParser.START_TAG:
 	                        name = parser.getName();
 	                        if (name.equalsIgnoreCase(POINT)){
-	                            p = new PolutionPoint();
+	                            p = new PollutionPoint();
 	                        } else if (p != null){
 	                            if (name.equalsIgnoreCase(LAT)){
 	                                p.lat=(Float.parseFloat(parser.nextText()));

@@ -13,7 +13,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.model.PollutionPoint;
 
 /**
  * The Class DBHelper.
@@ -144,7 +144,7 @@ public class DBHelper {
     	 *
     	 * @param point the point
     	 */
-    	public void insert(PolutionPoint point) {
+    	public void insert(PollutionPoint point) {
 	       ContentValues values = new ContentValues();
 	       values.put("lat", point.lat);
 	       values.put("lon", point.lon);
@@ -174,7 +174,7 @@ public class DBHelper {
     	 *
     	 * @param point the point
     	 */
-    	public void update(PolutionPoint point) {
+    	public void update(PollutionPoint point) {
 	       ContentValues values = new ContentValues();
 	                                                                                                                                                   
 	       values.put("lat", point.lat);
@@ -205,8 +205,8 @@ public class DBHelper {
   	 *
   	 * @return the all
   	 */
-  	public ArrayList<PolutionPoint> getAll() {
-	     ArrayList<PolutionPoint> ret = new ArrayList<PolutionPoint>();
+  	public ArrayList<PollutionPoint> getAll() {
+	     ArrayList<PollutionPoint> ret = new ArrayList<PollutionPoint>();
 	     Cursor cursor = null;
 	     try {
 	         cursor = this.db.query(DBHelper.DB_TABLE_POLLUTION_POINTS, DBHelper.COLS, null,
@@ -216,10 +216,10 @@ public class DBHelper {
 	        Log.d(DEBUG_TAG,"getAll : Se returneaza "+numRows+" inregistrari");
 	        cursor.moveToFirst();
 	        
-	        List<PolutionPoint> points = new ArrayList<PolutionPoint>(cursor.getCount());
+	        List<PollutionPoint> points = new ArrayList<PollutionPoint>(cursor.getCount());
 			if(cursor.moveToFirst()){
 				do {
-					PolutionPoint point = new PolutionPoint();
+					PollutionPoint point = new PollutionPoint();
 					point.lon = (cursor.getFloat(cursor.getColumnIndex("lon")));
 					point.lat = (cursor.getFloat(cursor.getColumnIndex("lat")));
 					
@@ -253,17 +253,17 @@ public class DBHelper {
   	 * @param bounds the bounds
   	 * @return the list
   	 */
-  	public List<PolutionPoint> loadPoints(int[][] bounds){
+  	public List<PollutionPoint> loadPoints(int[][] bounds){
 			String sql = "SELECT * FROM " + DB_TABLE_POLLUTION_POINTS + " WHERE lat >= " + bounds[0][0]/1E6 + " AND lat <= " + bounds[1][0]/1E6 + " AND lon >= " + bounds[0][1]/1E6 + " AND lon <= " + bounds[1][1]/1E6;
 			Cursor cursor = null;
-			List<PolutionPoint> points = new ArrayList<PolutionPoint>();
+			List<PollutionPoint> points = new ArrayList<PollutionPoint>();
 		try {
 			
 			cursor = this.db.rawQuery(sql, null);
 			
 			if(cursor.moveToFirst()){
 				do {
-					PolutionPoint point = new PolutionPoint();
+					PollutionPoint point = new PollutionPoint();
 					point.lon = (cursor.getFloat(cursor.getColumnIndex("lon")));
 					point.lat = (cursor.getFloat(cursor.getColumnIndex("lat")));
 					

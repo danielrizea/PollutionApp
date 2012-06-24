@@ -123,6 +123,7 @@ public class RadarView extends View{
 	
     @Override  
     protected void onDraw(Canvas canvas) {  
+    
     if(!hasInitialized) {  
     initializeConstants(canvas);  
     }  

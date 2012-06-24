@@ -25,7 +25,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ar.test.R;
+import com.pollution.R;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
@@ -38,10 +38,16 @@ import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
 import com.polution.map.SimpleMapView.OnLongpressListener;
 import com.polution.map.events.PanChangeListener;
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.model.PollutionPoint;
 
 public class PollutionMapActivity extends MapActivity {
 
+	
+	
+	//scale
+	private TextView maxValueText;
+	private TextView minValueText;
+	
 	//private DBHelper database;
 	private PollutionMapOverlay overlay;
 	private ContentResolver contentResolver;
@@ -54,7 +60,7 @@ public class PollutionMapActivity extends MapActivity {
 	private static final int AIR_Q = 2;
 	private static final int ALL_GAS = 3;
 	
-	private int selectedFlagForDesplay = PolutionPoint.CO;
+	private int selectedFlagForDesplay = PollutionPoint.CO;
 	//add-ons -------------------------------------------------------
 	MapController mc;
 	SimpleMapView mapView;
@@ -117,6 +123,8 @@ public class PollutionMapActivity extends MapActivity {
 		currentPointCoordinates = (TextView) findViewById(R.id.location_coordinates);
 		mapView = (SimpleMapView)findViewById(R.id.mapview_polutionoverlay);
 		selectedGas = (TextView)findViewById(R.id.shown_gas);
+		maxValueText = (TextView)findViewById(R.id.maxScaleValue);
+		minValueText = (TextView)findViewById(R.id.minScaleValue);
 		
 		//set street level depth
 		this.overlay = new PollutionMapOverlay(200, mapView);
@@ -147,7 +155,7 @@ public class PollutionMapActivity extends MapActivity {
 				float lat = (float)(longpressLocation.getLatitudeE6()/1E6);
 				float lon = (float)(longpressLocation.getLongitudeE6()/1E6);
 				
-				PolutionPoint point = new PolutionPoint(lat, lon);
+				PollutionPoint point = new PollutionPoint(lat, lon);
             	
             	Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
             	contentResolver.insert(uri, DatabaseTools.getContentValues(point));
@@ -223,6 +231,23 @@ public class PollutionMapActivity extends MapActivity {
 
 	}
 
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		setupForLocationAutoUPDATES();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+	}
+	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		myLocationManager.removeUpdates(myLocListener);
+	}
     private class MyOnItemSelectedListener implements OnItemSelectedListener {
 
         public void onItemSelected(AdapterView<?> parent,
@@ -231,20 +256,30 @@ public class PollutionMapActivity extends MapActivity {
         	String selection = "";
         	switch(pos){
 	        	case CO : {
-	        		selectedFlagForDesplay = PolutionPoint.CO;
+	        		selectedFlagForDesplay = PollutionPoint.CO;
 	        		selection = "CO";
+	        		maxValueText.setText("500 ppm ");
+	        		minValueText.setText("0 ppm ");
 	        	} break;
 	        	case NO : {
-	        		selectedFlagForDesplay = PolutionPoint.NO;
+	        		selectedFlagForDesplay = PollutionPoint.NO;
 	        		selection = "NO";
+	        		maxValueText.setText("2000 ppb ");
+	        		minValueText.setText("100 ppb ");
 	        	} break;
 	        	case AIR_Q : {
-	        		selectedFlagForDesplay = PolutionPoint.AIR_Q;
+	        		selectedFlagForDesplay = PollutionPoint.AIR_Q;
 	        		selection = "Air Q";
+	        		selection = "NO";
+	        		
+	        		maxValueText.setText("100 % ");
+	        		minValueText.setText("0 % ");
 	        	} break;
 	        	case ALL_GAS : {
-	        		selectedFlagForDesplay = PolutionPoint.ALL_GAS;
+	        		selectedFlagForDesplay = PollutionPoint.ALL_GAS;
 	        		selection = "All gas";
+	        		maxValueText.setText("100 % ");
+	        		minValueText.setText("0 % ");
 	        	} break;
         	}
         	updatePollutionOverlay();
@@ -290,7 +325,7 @@ public class PollutionMapActivity extends MapActivity {
 	
 	private void updatePollutionOverlay(){
 		
-		List<PolutionPoint> points = new ArrayList<PolutionPoint>();
+		List<PollutionPoint> points = new ArrayList<PollutionPoint>();
 		try{
 			Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + mapView.getBounds()[0][0] + "/" + mapView.getBounds()[0][1] + "/" + mapView.getBounds()[1][0] + "/" + mapView.getBounds()[1][1]);
 			Cursor values = managedQuery(uri, null, null, null, null);

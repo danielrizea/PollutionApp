@@ -8,7 +8,7 @@ package com.polution.database;
 
 import java.util.List;
 
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.model.PollutionPoint;
 
 import android.app.IntentService;
 import android.content.ComponentName;

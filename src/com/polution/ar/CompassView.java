@@ -8,7 +8,7 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.ar.test.R;
+import com.pollution.R;
 
 public class CompassView extends View {
 	private float azimuth;

@@ -12,22 +12,22 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.model.PollutionPoint;
 
 public class DatabaseTools extends Activity{
 
 	private static String DEBUG_TAG = "DatabaseTools";
 	
-	public static List<PolutionPoint> getPointsInBounds(Cursor values){
+	public static List<PollutionPoint> getPointsInBounds(Cursor values){
 
-		List<PolutionPoint> points = new ArrayList<PolutionPoint>();
+		List<PollutionPoint> points = new ArrayList<PollutionPoint>();
 		
 		if(values == null)
 			return points;
 		
 		if(values.moveToFirst()){
 			do{
-				PolutionPoint point = new PolutionPoint();
+				PollutionPoint point = new PollutionPoint();
 				point.lon = (values.getFloat(values.getColumnIndex("lon")));
 				point.lat = (values.getFloat(values.getColumnIndex("lat")));
 				
@@ -53,7 +53,7 @@ public class DatabaseTools extends Activity{
 		return points;
 	}
 	
-	public static ContentValues getContentValues(PolutionPoint point){	
+	public static ContentValues getContentValues(PollutionPoint point){	
 		
 		   ContentValues values = new ContentValues();
 		   

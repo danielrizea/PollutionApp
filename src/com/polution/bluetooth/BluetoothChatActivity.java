@@ -53,7 +53,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ar.test.R;
+import com.pollution.R;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
@@ -65,7 +65,7 @@ import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
 import com.polution.map.PollutionMapOverlay;
 import com.polution.map.SimpleMapView;
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.model.PollutionPoint;
 
 /**
  * This is the main Activity that displays the current chat session.
@@ -425,27 +425,38 @@ public class BluetoothChatActivity extends MapActivity {
     		
     		String val1 = st.nextToken();
     		Log.d("Message"," String1:"+val1 );
-    		param1.setText(val1);
+    		
     			if(st.hasMoreTokens()){
     				String val2 = st.nextToken();
     				Log.d("Message"," String2:"+val2 );
-    				param2.setText(val2);
+    				
     				if(st.hasMoreTokens()){
     					String val3 = st.nextToken();
     					Log.d("Message"," String3:"+val3 );
-    					param3.setText(val3);
+    					
     					if(st.hasMoreTokens()){
     						String battery = st.nextToken();
     						Log.d("Message"," String4:"+battery );
     						batteryStatus.setText(transformToSensorOutput(battery) + VOLT_SIGN);
 
 
-    						PolutionPoint point = new PolutionPoint();
-    						
-    						point.sensor_1 = Float.parseFloat(val1);
-    						point.sensor_2 = Float.parseFloat(val2);
-    						point.sensor_3 = Float.parseFloat(val3);
+    						PollutionPoint point = new PollutionPoint();
     						point.batteryVoltage = Float.parseFloat(battery);
+    						
+    						float CO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val1), PollutionSensor.CO_Rs, point.batteryVoltage);
+    						float co_ppm = PollutionSensor.getSensorValue(PollutionSensor.CO_SENSOR, CO_Rx); 
+    						point.sensor_1 = co_ppm;
+    						param1.setText(co_ppm +" ppm");
+    						
+    						float NO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val2), PollutionSensor.NO_Rs, point.batteryVoltage);
+    						float no_ppb = PollutionSensor.getSensorValue(PollutionSensor.NO_SENSOR, NO_Rx);
+    						point.sensor_2 = no_ppb;
+    						param2.setText(no_ppb+"");
+    						param3.setText(val3);
+    						System.out.println(" [CO : Rx: "+CO_Rx+" ppm:"+co_ppm +"]");
+    						System.out.println(" [NO : Rx: "+NO_Rx+" ppm:"+no_ppb +"]");
+    						point.sensor_3 = Float.parseFloat(val3);
+
     						point.timestamp = System.currentTimeMillis();
     						// Or use LocationManager.GPS_PROVIDER
 
@@ -458,7 +469,7 @@ public class BluetoothChatActivity extends MapActivity {
     						
     						Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
     	                	contentResolver.insert(uri, DatabaseTools.getContentValues(point));
-    	                	Log.d("debug","Point added " + point.lat + " " + point.lon );
+    	                	Log.d("debug","Point added " + point );
     						Toast.makeText(this, "Point saved " + point, Toast.LENGTH_LONG).show();
     						
     						return true;
@@ -527,7 +538,7 @@ public class BluetoothChatActivity extends MapActivity {
             return true;
             
         case R.id.query_device :
-        		sendMessage(PolutionDeviceConstants.MESSAGE_QUERY_DEVICE);
+        		sendMessage(PollutionSensor.MESSAGE_QUERY_DEVICE);
         	return true;
         /*	
         case R.id.beep_device_start : 
@@ -580,7 +591,7 @@ public class BluetoothChatActivity extends MapActivity {
         }
         return false;
     }
-
+    
     private Boolean setupForLocationAutoUPDATES() {
 		/*
 		 * Register with out LocationManager to send us an intent (whos
@@ -613,6 +624,7 @@ public class BluetoothChatActivity extends MapActivity {
 		
 
 	}
+    
     
     class MyLocListener implements LocationListener{
 

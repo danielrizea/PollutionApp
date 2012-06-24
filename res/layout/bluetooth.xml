@@ -45,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
-            android:text="Status:"
+            android:text="@string/provider"
           />
         
          <TextView 
@@ -67,29 +67,29 @@
          <TextView 
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="CO:"
+            android:textSize="30sp"
+            android:text="@string/CO"
           />
         
         <TextView 
             android:id="@+id/param1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="40sp"
+            android:textSize="30sp"
             />
         
         <TextView 
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="NO:"
+            android:textSize="30sp"
+            android:text="@string/NO"
           />
         
         <TextView 
             android:id="@+id/param2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="40sp"
+            android:textSize="30sp"
             />
         
     </LinearLayout>
@@ -104,29 +104,29 @@
 		<TextView 
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="Air Q:"
+            android:textSize="30sp"
+            android:text="@string/AIR_Q"
           />
         
         <TextView 
             android:id="@+id/param3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="40sp"
+            android:textSize="30sp"
             />
         
         <TextView 
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="20sp"
-            android:text="Battery :"
+            android:text="@string/battery"
           />
         
         <TextView 
             android:id="@+id/batteryStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="40sp"
+            android:textSize="30sp"
             />
         
     </LinearLayout>

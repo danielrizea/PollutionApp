@@ -21,7 +21,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 
-import com.ar.test.R;
+import com.pollution.R;
 
 public class ApplicationPreference extends PreferenceActivity implements OnSharedPreferenceChangeListener{
 	

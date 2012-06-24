@@ -19,7 +19,7 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.Projection;
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.model.PollutionPoint;
 
 /**
  * An overlay that draws a Pollution Map based using the concept of a value heat map.
@@ -67,7 +67,7 @@ public class PollutionMapOverlay extends Overlay {
 	 * GoogleMaps. The class will convert it.
 	 * @param points
 	 */
-	public void update(List<PolutionPoint> points, int flag){
+	public void update(List<PollutionPoint> points, int flag){
 		float pxRadius = (float) (mapView.getProjection().metersToEquatorPixels(radius) * 1/Math.cos(Math.toRadians(mapView.getMapCenter().getLatitudeE6()/1E6)));
 		HeatTask task = new HeatTask(mapView.getWidth(), mapView.getHeight(), pxRadius, points, flag);
 		new Thread(task).start();
@@ -80,12 +80,12 @@ public class PollutionMapOverlay extends Overlay {
 		private int width;
 		private int height;
 		private float radius;
-		private List<PolutionPoint> points;
+		private List<PollutionPoint> points;
 
 		//decide which values for sensor to have from point
 		private int flag = 0; 
 		
-		public HeatTask(int width, int height, float radius, List<PolutionPoint> points, int flag){
+		public HeatTask(int width, int height, float radius, List<PollutionPoint> points, int flag){
 			backbuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 			myCanvas = new Canvas(backbuffer);
 			Paint p = new Paint();
@@ -212,7 +212,7 @@ public class PollutionMapOverlay extends Overlay {
 			
 			Point out = new Point(1, 1);
 			Paint gp = new Paint();
-			for(PolutionPoint p : points){
+			for(PollutionPoint p : points){
 				GeoPoint in = new GeoPoint((int)(p.lat*1E6),(int)(p.lon*1E6));
 				proj.toPixels(in, out);
 				addPoint(out.x, out.y, p ,gp);
@@ -228,16 +228,16 @@ public class PollutionMapOverlay extends Overlay {
 		}
 		
 		
-		private void addPoint(float x, float y, PolutionPoint p, Paint gp) {
+		private void addPoint(float x, float y, PollutionPoint p, Paint gp) {
 	
 			int value = 0;
 			//get poit value
 			switch(this.flag){
 			
-			case PolutionPoint.CO : { value = p.intensity_CO;} break;
-			case PolutionPoint.NO : { value = p.intensity_NO;} break;
-			case PolutionPoint.AIR_Q : {value = p.intensity_AirQ;} break;
-			case PolutionPoint.ALL_GAS : {value = p.intensity;} break;
+			case PollutionPoint.CO : { value = p.intensity_CO;} break;
+			case PollutionPoint.NO : { value = p.intensity_NO;} break;
+			case PollutionPoint.AIR_Q : {value = p.intensity_AirQ;} break;
+			case PollutionPoint.ALL_GAS : {value = p.intensity;} break;
 			
 			}
 			

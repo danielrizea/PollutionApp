@@ -53,7 +53,7 @@ import com.google.android.maps.MyLocationOverlay;
 import com.polution.database.DatabaseTools;
 import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.model.PollutionPoint;
 
 // ----------------------------------------------------------------------
 
@@ -302,7 +302,7 @@ public class ARView extends Activity implements SensorEventListener{
 				Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + startLat + "/" + startLon + "/" + stopLat + "/" + stopLon);
 				Cursor values = contentResolver.query(uri, null, null, null, null);
 					
-				List<PolutionPoint> points = DatabaseTools.getPointsInBounds(values);
+				List<PollutionPoint> points = DatabaseTools.getPointsInBounds(values);
 					
 				Log.d(TAG,"Location changed");
 				

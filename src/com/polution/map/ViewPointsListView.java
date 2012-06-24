@@ -21,11 +21,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.ar.test.R;
+import com.pollution.R;
 import com.polution.bluetooth.QueryService;
 import com.polution.database.DatabaseTools;
 import com.polution.database.PollutionContentProvider;
-import com.polution.map.model.PolutionPoint;
+import com.polution.map.model.PollutionPoint;
 import com.polution.server.FileOperations;
 import com.polution.server.XMLProtocol;
 
@@ -36,7 +36,7 @@ public class ViewPointsListView extends Activity{
 	
 	private ListPointsAdapter listAdapter;
 	
-	private List<PolutionPoint> points;
+	private List<PollutionPoint> points;
 	
 	private TextView pointsNo;
 	
@@ -70,17 +70,17 @@ public class ViewPointsListView extends Activity{
 		
 	}
 	
-	  class ListPointsAdapter extends ArrayAdapter<PolutionPoint> {
+	  class ListPointsAdapter extends ArrayAdapter<PollutionPoint> {
 	    	private static final String tag = "PolutionPointAdapter";
 	    	
 	    	private TextView loc;
 	    	private TextView sensors;
 	    	private TextView timestamp;
 	    	
-	    	private List<PolutionPoint> records = new ArrayList<PolutionPoint>();
+	    	private List<PollutionPoint> records = new ArrayList<PollutionPoint>();
 
 	    	public ListPointsAdapter(Context context, int textViewResourceId,
-	    			List<PolutionPoint> objects) {
+	    			List<PollutionPoint> objects) {
 	    		super(context, textViewResourceId, objects);
 	    		this.records = objects;
 	    	}
@@ -89,7 +89,7 @@ public class ViewPointsListView extends Activity{
 	    		return this.records.size();
 	    	}
 
-	    	public PolutionPoint getItem(int index) {
+	    	public PollutionPoint getItem(int index) {
 	    		return this.records.get(index);
 	    	}
 
@@ -97,7 +97,7 @@ public class ViewPointsListView extends Activity{
 	    		View row = convertView;
 	    		
 	    		// Get item
-	    		PolutionPoint record = getItem(position);
+	    		PollutionPoint record = getItem(position);
 
 	    		//if it is the right type of view
 			    if (row == null ) {
@@ -143,7 +143,7 @@ public class ViewPointsListView extends Activity{
 			
 
 				
-				List<PolutionPoint> points = XMLProtocol.parseXMLDocument(FileOperations.readFile(this, FileOperations.DATABASE_FILE_NAME));
+				List<PollutionPoint> points = XMLProtocol.parseXMLDocument(FileOperations.readFile(this, FileOperations.DATABASE_FILE_NAME));
 				//DELETE old database
 				Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/delete/point_table" );
 				contentResolver.delete(uri, null, null);

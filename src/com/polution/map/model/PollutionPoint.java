@@ -7,7 +7,7 @@ import java.util.Random;
  * @author Daniel
  *
  */
-public class PolutionPoint {
+public class PollutionPoint {
 	
 	
 	public static final int CO = 0;
@@ -31,16 +31,16 @@ public class PolutionPoint {
 	public int id;
 	public int flag;
 	
-	public PolutionPoint(float lat, float lon, int intensity) {
+	public PollutionPoint(float lat, float lon, int intensity) {
 		this.lat = lat;
 		this.lon = lon;
 	}
 	
-	public PolutionPoint(){
+	public PollutionPoint(){
 		this(0f,0f,0);
 	}
 	
-	public PolutionPoint(float lat, float lon){
+	public PollutionPoint(float lat, float lon){
 		this(lat,lon,1);
 	}
 	
@@ -51,9 +51,10 @@ public class PolutionPoint {
 		Random rand = new Random();
 		return rand.nextInt(120);
 		*/
+		
 		//return intensity;
-		this.intensity_CO = (int) ((sensor_1 * 255)/1024);
-		this.intensity_NO = (int)((sensor_2  * 255)/1024);
+		this.intensity_CO = (int)((sensor_1 * 255)/500);
+		this.intensity_NO = (int)((sensor_2  * 255)/2000);
 		this.intensity_AirQ = (int)((sensor_3 * 255)/1024);
 		
 		//TODO figure out a better formula to calculate overall point intensity

@@ -18,7 +18,7 @@ package com.polution.bluetooth;
 
 import java.util.Set;
 
-import com.ar.test.R;
+import com.pollution.R;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;

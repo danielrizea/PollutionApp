@@ -84,4 +84,11 @@
     <string name="view_points">view points</string>
     <string name="load_database">load database</string>
     <string name="save_database">save database</string>
+    
+    <string name="provider">Provider:</string>
+    
+    <string name="CO">CO:</string>
+    <string name="NO">NO:</string>
+    <string name="AIR_Q">AIR_Q:</string>
+    <string name="battery">Battery:</string>
 </resources>
