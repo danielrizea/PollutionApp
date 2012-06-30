@@ -259,6 +259,8 @@ public class BluetoothChatService {
             try {
                 // This is a blocking call and will only return on a
                 // successful connection or an exception
+            	
+            	//may be null
                 mmSocket.connect();
             } catch (IOException e) {
                 connectionFailed();
@@ -285,7 +287,8 @@ public class BluetoothChatService {
         public void cancel() {
             try {
             	Log.d(TAG,"close() socket on Connect Thread");
-                mmSocket.close();
+            	mmSocket.close();
+                
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);
             }
@@ -400,6 +403,7 @@ public class BluetoothChatService {
                 mmOutStream.write(buffer);
 
                 // Share the sent message back to the UI Activity
+                
                 mHandler.obtainMessage(BluetoothChatActivity.MESSAGE_WRITE, -1, -1, buffer)
                         .sendToTarget();
             } catch (IOException e) {

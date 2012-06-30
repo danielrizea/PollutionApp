@@ -2,6 +2,7 @@ package com.polution.map;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -25,13 +26,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.pollution.R;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
+import com.pollution.R;
 import com.polution.bluetooth.QueryService;
 import com.polution.database.DatabaseTools;
 import com.polution.database.GEOPoint;
@@ -42,8 +43,6 @@ import com.polution.map.model.PollutionPoint;
 
 public class PollutionMapActivity extends MapActivity {
 
-	
-	
 	//scale
 	private TextView maxValueText;
 	private TextView minValueText;
@@ -157,6 +156,10 @@ public class PollutionMapActivity extends MapActivity {
 				
 				PollutionPoint point = new PollutionPoint(lat, lon);
             	
+				Random r = new Random();
+				point.sensor_1 = (float)(200 + r.nextInt(400));
+				point.sensor_2 = 400 + r.nextInt(1600);
+				point.sensor_3 = r.nextInt(100);
             	Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
             	contentResolver.insert(uri, DatabaseTools.getContentValues(point));
             	

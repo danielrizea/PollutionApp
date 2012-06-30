@@ -1,8 +1,10 @@
 package com.polution.bluetooth;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -24,6 +26,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.maps.GeoPoint;
+import com.polution.database.AlarmNotifier;
 import com.polution.database.DatabaseTools;
 import com.polution.database.PollutionContentProvider;
 import com.polution.map.PollutionMapActivity;
@@ -31,12 +35,19 @@ import com.polution.map.model.PollutionPoint;
 
 public class QueryService extends IntentService{
 
+	//15 seconds
+	public static int BASE_DEFAULT_WAKEUP_TIME = 15000;
+	
+	//15 minutes
+	public static int MAX_WAKEUP_TIME = 9000000;
+	
+	public static int wakeupInterval = 15000;
 	
 	String mCurrentProvider = LocationManager.NETWORK_PROVIDER;
 	
 	Boolean mLocationEnabled = false;
 	
-	private Location lastLocation;
+	private static Location lastLocation;
 	
 	protected LocationManager myLocationManager = null;
 	
@@ -210,44 +221,32 @@ public class QueryService extends IntentService{
                    
                    Location myLoc = myLocationManager.getLastKnownLocation(mCurrentProvider);
                    
-                   
-                   if(p.sensor_1>250){
-	                   //notification 
-	                   String ns = Context.NOTIFICATION_SERVICE;
-	                   NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
-	                   
-	                   int icon = android.R.drawable.btn_minus;
-	                   CharSequence tickerText = "Hello";
-	                   long when = System.currentTimeMillis();
 
-	                   Notification notification = new Notification(icon, tickerText, when);
-	                   
-	                   Context context = getApplicationContext();
-	                   CharSequence contentTitle = "CO alert";
-	                   CharSequence contentText = "The CO concentration has breached the 250ppm barier";
-	                   Intent notificationIntent = new Intent(getApplicationContext(), PollutionMapActivity.class);
-	                   PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+           		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+           		boolean alertsEnabled = prefs.getBoolean("enable_warnings", false);
+           		
+           
+           		if(alertsEnabled){
+                   manageAlerts(p, prefs);
+           		}
 
-	                   notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-	                   
-
-
-	                   mNotificationManager.notify(HELLO_ID, notification);
-	                   sendMessage(PollutionSensor.MESSAGE_BEEP_START);
-                   }
-                   
+           		if(prefs.getBoolean("enable_adaptive", false))
+           			adaptiveWakeupAlgorithm(myLoc, lastLocation);
+           		
+           		
                    if(myLoc != null){
-                	   if(!myLoc.equals(lastLocation)){
-	                	   p.lat = myLoc.getLatitude();
-	                	   p.lon = myLoc.getLongitude();
-	                	   p.timestamp = System.currentTimeMillis();
-	                	   p.calculatePollutionIntensityValue();
+                	   
+                	 
+                	   p.lat = myLoc.getLatitude();
+                	   p.lon = myLoc.getLongitude();
+                	   p.timestamp = System.currentTimeMillis();
+                	   p.calculatePollutionIntensityValue();
 	                	   
-	                	   Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
-	                	   contentResolver.insert(uri, DatabaseTools.getContentValues(p));
-	                	   Log.d(TAG,"Add point " + p);		
-	                	   Toast.makeText(getApplicationContext(), "Add point to database", Toast.LENGTH_SHORT).show();
-                	   }
+                	   Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
+                	   contentResolver.insert(uri, DatabaseTools.getContentValues(p));
+                	   Log.d(TAG,"Add point " + p);		
+                	   Toast.makeText(getApplicationContext(), "Add point to database", Toast.LENGTH_SHORT).show();
+                	   
                    }
                    lastLocation = myLoc;
 
@@ -311,13 +310,28 @@ public class QueryService extends IntentService{
        						String battery = st.nextToken();
        						//Log.d("Message"," String4:"+battery );
 
-
-       						float CO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val1), PollutionSensor.CO_Rs, point.batteryVoltage);
+    						point.batteryVoltage = (1.1f*4.3f*Float.parseFloat(battery))/1024;
+    						
+    						float CO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val1), PollutionSensor.CO_Rs, point.batteryVoltage);
     						float co_ppm = PollutionSensor.getSensorValue(PollutionSensor.CO_SENSOR, CO_Rx); 
     						point.sensor_1 = co_ppm;
+
     						
-       						point.sensor_2 = Float.parseFloat(val2);
-       						point.sensor_3 = Float.parseFloat(val3);
+    						float NO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val2), PollutionSensor.NO_Rs, point.batteryVoltage);
+    						float no_ppb = PollutionSensor.getSensorValue(PollutionSensor.NO_SENSOR, NO_Rx);
+    						point.sensor_2 = no_ppb;
+
+    						System.out.println(" [CO : Rx: "+CO_Rx+" ppm:"+co_ppm +"]");
+    						System.out.println(" [NO : Rx: "+NO_Rx+" ppm:"+no_ppb +"]");
+    						//percent
+
+    						System.out.println(Float.parseFloat(val3));
+    						
+    						float Air_Q = (Float.parseFloat(val3) * 100) / 1024;
+    						//System.out.println(Float.parseFloat(val3));
+    						point.sensor_3 = Air_Q;
+    						point.timestamp = System.currentTimeMillis();
+
        						point.batteryVoltage = Float.parseFloat(battery);
 
        						return point;
@@ -336,6 +350,126 @@ public class QueryService extends IntentService{
 
        }
  
+    private void adaptiveWakeupAlgorithm(Location myLoc,Location oldLoc){
+    
+    	if(myLoc == null || oldLoc == null){
+    		cancelQueryServiceWakeup(this);
+    		scheduleQueryServiceWakeup(this, QueryService.BASE_DEFAULT_WAKEUP_TIME);
+    		return;
+    	}
+    		//else then execute algorithm
+		int oldWakeupTimeInterval = QueryService.wakeupInterval;	
+    	if(myLoc.getLatitude() == oldLoc.getLatitude() && myLoc.getLongitude() == oldLoc.getLongitude()){
+    		//same location 	
+
+    		int newWakeupTimeInterval = 2*oldWakeupTimeInterval;
+    		
+    		if(newWakeupTimeInterval > MAX_WAKEUP_TIME){
+    			newWakeupTimeInterval = MAX_WAKEUP_TIME;
+    		}
+    		
+    		cancelQueryServiceWakeup(getApplicationContext());
+    		scheduleQueryServiceWakeup(getApplicationContext(), newWakeupTimeInterval);
+    		QueryService.wakeupInterval = newWakeupTimeInterval;
+    		Toast.makeText(getApplicationContext(), "New scheduled time :" + newWakeupTimeInterval/1000 + " seconds", Toast.LENGTH_SHORT).show();
+    		
+    	}else
+    	{
+    		//check to see if wakeup time greater than BASE_WAKEUP_TIME
+    		if(oldWakeupTimeInterval > BASE_DEFAULT_WAKEUP_TIME){
+    			cancelQueryServiceWakeup(this);
+    			scheduleQueryServiceWakeup(this, BASE_DEFAULT_WAKEUP_TIME);
+    			QueryService.wakeupInterval = BASE_DEFAULT_WAKEUP_TIME;
+    			Toast.makeText(this, "Revert wakeup time interval back to base time of " + BASE_DEFAULT_WAKEUP_TIME, Toast.LENGTH_SHORT).show();
+    		}
+    			
+    	}
+    		
+    	
+    }
+       
+    private void manageAlerts(PollutionPoint p, SharedPreferences prefs){
+    	
+    	int CO_limit = prefs.getInt("co_sensitivity", -1);
+   		int NO_limit = prefs.getInt("no_sensitivity",-1);
+   		int AIR_Q_limit = prefs.getInt("air_q_sensitivity", -1);
+    	
+    	if(p.sensor_1>CO_limit || p.sensor_2 > NO_limit || p.sensor_3 > AIR_Q_limit){
+            //notification 
+            String ns = Context.NOTIFICATION_SERVICE;
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+            
+            int icon = android.R.drawable.btn_minus;
+            CharSequence tickerText = "Pollution Alert!";
+            long when = System.currentTimeMillis();
+
+            Notification notification = new Notification(icon, tickerText, when);
+            
+            Context context = getApplicationContext();
+            
+            String contentTitle = "";
+            String contentText = "";
+            
+            if(p.sensor_1 > CO_limit){
+         	   contentTitle += " CO ";
+         	   contentText += " CO is " + p.sensor_1 + " ppm over " + CO_limit;
+            }
+            if(p.sensor_2 > NO_limit){
+         	   contentTitle += " NO" ;
+         	   contentText += " NO is " + p.sensor_2 + " ppb over " + NO_limit;
+            }
+            if(p.sensor_3 > AIR_Q_limit){
+         	   contentTitle += " Air quality";
+         	   contentText += "Air Q is " + p.sensor_3 + " over " + AIR_Q_limit;
+            }
+            contentTitle += "alert!";
+            notification.defaults=Notification.DEFAULT_ALL;
+            Intent notificationIntent = new Intent(getApplicationContext(), PollutionMapActivity.class);
+            PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+
+            notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+
+            mNotificationManager.notify(HELLO_ID, notification);
+            //sendMessage(PollutionSensor.MESSAGE_BEEP_START);
+        }
+    	
+    }
+    
+    public static boolean scheduleQueryServiceWakeup(Context context,int intervalMillis){
+    	Calendar cal = Calendar.getInstance();  
+        // add 5 minutes to the calendar object
+        //cal.add(Calendar.SECOND, 30);
+        
+        //set the sensor sampling period
+        Intent intent = new Intent(context, AlarmNotifier.class);
+       
+        intent.putExtra("alarm_message", "Query device");
+        // In reality, you would want to have a static variable for the request code instead of 192837
+        PendingIntent sender = PendingIntent.getBroadcast(context, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        
+        // Get the AlarmManager service
+        AlarmManager am = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+        am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
+        //5 seconds
+        am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), intervalMillis, sender);
+        QueryService.wakeupInterval = intervalMillis;
+        
+        return true;
+    }
+    
+    public static boolean cancelQueryServiceWakeup(Context context){
+    	Intent intent = new Intent(context, AlarmNotifier.class);
+        
+        intent.putExtra("alarm_message", "A message for the app");
+        // In reality, you would want to have a static variable for the request code instead of 192837
+        PendingIntent sender = PendingIntent.getBroadcast(context, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager am = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+        
+        am.cancel(sender);
+        
+        return true;
+    }
+       
        
    	private Boolean setupForLocationAutoUPDATES() {
 		/*

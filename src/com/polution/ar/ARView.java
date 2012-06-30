@@ -1,22 +1,5 @@
 package com.polution.ar;
 
-/*
- * Copyright (C) 2007 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,9 +69,6 @@ public class ARView extends Activity implements SensorEventListener{
 	
 	final float MINIMUM_DISTANCECHANGE_FOR_UPDATE = 1; // in Meters
 	final long MINIMUM_TIME_BETWEEN_UPDATE = 2000; // in Milliseconds
-    
-    
-    private RadarView radarView;
 
     private double lastAngle = 0;
 
@@ -168,6 +148,7 @@ public class ARView extends Activity implements SensorEventListener{
         
         setupForLocationAutoUPDATES();
     }
+    
     public void onSensorChanged(SensorEvent event) {
     	
 		  if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
@@ -399,7 +380,7 @@ class Preview extends SurfaceView implements SurfaceHolder.Callback {
            
            mCamera.setPreviewDisplay(holder);
            
-           // Preview callback used whenever new viewfinder frame is available
+           // Preview callback used whenever new camera frame is available
            mCamera.setPreviewCallback(new PreviewCallback() {
         	  public void onPreviewFrame(byte[] data, Camera camera)
         	  {
@@ -437,12 +418,21 @@ class Preview extends SurfaceView implements SurfaceHolder.Callback {
         // Now that the size is known, set up the camera parameters and begin
         // the preview.
     	
+    	   Camera.Parameters parameters = mCamera.getParameters();
+    	    List<Camera.Size> previewSizes = parameters.getSupportedPreviewSizes();
+
+    	    // You need to choose the most appropriate previewSize for your app
+    	    Camera.Size previewSize = previewSizes.get(0);// .... select one of previewSizes here
+
+    	    
+
     	mCamera.setDisplayOrientation(0);
-        Camera.Parameters parameters = mCamera.getParameters();
-        parameters.setPreviewSize(320, 240);
-        parameters.setPreviewFrameRate(15);
-        parameters.setSceneMode(Camera.Parameters.SCENE_MODE_NIGHT);
-        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+        //Camera.Parameters parameters = mCamera.getParameters();
+        parameters.setPreviewSize(previewSize.width, previewSize.height);
+        //parameters.setPreviewSize(320, 240);
+        //parameters.setPreviewFrameRate(15);
+        //parameters.setSceneMode(Camera.Parameters.SCENE_MODE_NIGHT);
+        //parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         mCamera.setParameters(parameters);
         mCamera.startPreview();
     }

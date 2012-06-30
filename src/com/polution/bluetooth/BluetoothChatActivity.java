@@ -149,14 +149,14 @@ public class BluetoothChatActivity extends MapActivity {
     private TextView applicationStatusTextView;
     
     
+    
+    
     public String transformToSensorOutput(String stringValue){
     	
     DecimalFormat maxDigitsFormatter = new DecimalFormat("#.#");
 
-    
-    	double val= 0;
-    	val = Double.parseDouble(stringValue);
-    	val = (val *4.4)/1024;
+    	
+    	float val = PollutionSensor.getBatteryVoltage(stringValue);
     	
     	return maxDigitsFormatter.format(val);
     }
@@ -441,7 +441,8 @@ public class BluetoothChatActivity extends MapActivity {
 
 
     						PollutionPoint point = new PollutionPoint();
-    						point.batteryVoltage = Float.parseFloat(battery);
+    						point.batteryVoltage = PollutionSensor.getBatteryVoltage(battery);
+    						
     						
     						float CO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val1), PollutionSensor.CO_Rs, point.batteryVoltage);
     						float co_ppm = PollutionSensor.getSensorValue(PollutionSensor.CO_SENSOR, CO_Rx); 
@@ -451,11 +452,16 @@ public class BluetoothChatActivity extends MapActivity {
     						float NO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val2), PollutionSensor.NO_Rs, point.batteryVoltage);
     						float no_ppb = PollutionSensor.getSensorValue(PollutionSensor.NO_SENSOR, NO_Rx);
     						point.sensor_2 = no_ppb;
-    						param2.setText(no_ppb+"");
-    						param3.setText(val3);
+    						DecimalFormat fm = new DecimalFormat("#.#");
+    						param2.setText(fm.format(no_ppb)+"");
+    						
     						System.out.println(" [CO : Rx: "+CO_Rx+" ppm:"+co_ppm +"]");
     						System.out.println(" [NO : Rx: "+NO_Rx+" ppm:"+no_ppb +"]");
-    						point.sensor_3 = Float.parseFloat(val3);
+    						//percent
+    						float Air_Q = Float.parseFloat(val3) * 100 / 1024;
+    						
+    						param3.setText(fm.format(Air_Q)+"");
+    						point.sensor_3 = Air_Q;
 
     						point.timestamp = System.currentTimeMillis();
     						// Or use LocationManager.GPS_PROVIDER
@@ -554,37 +560,14 @@ public class BluetoothChatActivity extends MapActivity {
         	
             // get a Calendar object with current time
             //used to trigger at time
-        	Calendar cal = Calendar.getInstance();  
-            // add 5 minutes to the calendar object
-            //cal.add(Calendar.SECOND, 30);
-            
-            //set the sensor sampling period
-            Intent intent = new Intent(this, AlarmNotifier.class);
-           
-            intent.putExtra("alarm_message", "Query device");
-            // In reality, you would want to have a static variable for the request code instead of 192837
-            PendingIntent sender = PendingIntent.getBroadcast(this, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            
-            // Get the AlarmManager service
-            AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-            am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
-            //5 seconds
-            am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 15000, sender);
-            
+        	QueryService.scheduleQueryServiceWakeup(this, QueryService.BASE_DEFAULT_WAKEUP_TIME);
             Log.d(TAG,"Start sampling");
         	
         }break;
        
         
         case R.id.stop_sampling : {
-        	 Intent intent = new Intent(this, AlarmNotifier.class);
-             
-             intent.putExtra("alarm_message", "A message for the app");
-             // In reality, you would want to have a static variable for the request code instead of 192837
-             PendingIntent sender = PendingIntent.getBroadcast(this, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-             AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-             
-             am.cancel(sender);
+        	 QueryService.cancelQueryServiceWakeup(this);
              Log.d(TAG,"Stop sampling");
         }
         

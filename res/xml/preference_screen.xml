@@ -8,16 +8,27 @@
         > 
     	 <CheckBoxPreference
             android:key="wifi enabled"
-            android:title="WiFi" />  
+            android:title="WiFi" 
+            android:summary="Enable WiFi server data upload on connection established"
+            />  
             
     	<ListPreference 
     	    android:key="deviceMAC"
     	    android:title="Sensor Device MAC"
     	    android:summary="Choose the MAC of your sensor device"
     	    /> 
-    	 <CheckBoxPreference
-                android:key="prefer wifi"
-                android:title="Prefer WiFi" />
+    	 
+    	<CheckBoxPreference 
+    	    android:key="enable_query_service"
+    	    android:title="Enable Query Service"
+    	    android:summary="Enable a background service that will periodically request infromation from pollution sensor"
+    	    />
+    	 <CheckBoxPreference 
+    	     android:key="enable_adaptive"
+    	     android:title="Adaptive Algorithm"
+    	     android:summary="Enable Adaptive Algorithm for phone wakeup and sensor value retrieving"
+    	     />
+    	 
         
     </PreferenceCategory>
    

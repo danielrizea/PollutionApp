@@ -57,7 +57,7 @@ public class PollutionSensor {
 		Vcc = (Vcc*4.4f)/1024;
 		Vo = (Vo*4.4f)/1024;
 		Rx = ((Vcc*Rs)-Vo*Rs)/Vo; 
-		
+		System.out.println(" Vcc : "+Vcc+"Vo "+ Vo+" Rs " +Rs+" Rx "+Rx+" ");
 		return Rx;
 	}
 	/**
@@ -114,5 +114,13 @@ public class PollutionSensor {
 		return value;
 	}
 	
+	public static float getBatteryVoltage(String battery){
+		
+		float val= 0;
+    	val = Float.parseFloat(battery);
+    	val = (val *1.1f* 4.3f)/1024;
+    	
+    	return val;
+	}
 	
 }

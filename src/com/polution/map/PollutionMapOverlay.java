@@ -100,7 +100,9 @@ public class PollutionMapOverlay extends Overlay {
 			
 			//System.out.println("Out " + radius +" " + width +" "+ height);
 		}
-	
+	/*
+	 *  Not used, it is a slow implementation, better use the Potter.DUFF method
+	 */
 		synchronized public void putCircleMask(int xoff, int yoff, int radius, int[] pixels ){	
 			  
 			  int w = 2*(radius+2);
@@ -204,11 +206,11 @@ public class PollutionMapOverlay extends Overlay {
 		@Override
 		public void run() {
 			Projection proj = mapView.getProjection();
-			
+/*			
 			int[] pixels = new int[(int) (this.width * this.height)];
 			backbuffer.getPixels(pixels, 0, this.width, 0, 0, this.width,
 					this.height);
-			
+*/			
 			
 			Point out = new Point(1, 1);
 			Paint gp = new Paint();
@@ -218,7 +220,6 @@ public class PollutionMapOverlay extends Overlay {
 				addPoint(out.x, out.y, p ,gp);
 			}
 
-			
 			colorize(0, 0);
 			
 			lock.lock();
@@ -269,6 +270,7 @@ public class PollutionMapOverlay extends Overlay {
 				int r = 0, g = 0, b = 0, tmp = 0;
 				//the coe has change, alfa here is the red value
 				int alpha = 255 & (pixels[i] >>> 16);
+				
 				//if(alpha > 255 || alpha < 0 )
 
 				if (alpha == 0) {
@@ -295,7 +297,7 @@ public class PollutionMapOverlay extends Overlay {
 				} else
 					b = 255;
 				
-				pixels[i] = Color.argb((int) alpha / 2, r, g, b);
+				pixels[i] = Color.argb((int) alpha/2 , r, g, b);
 			}
 			backbuffer.setPixels(pixels, 0, this.width, 0, 0, this.width,
 					this.height);
