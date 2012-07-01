@@ -148,9 +148,8 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
 			if(sharedPreferences.getBoolean("enable_adaptive", false) == false){
 				
 				QueryService.wakeupInterval = QueryService.BASE_DEFAULT_WAKEUP_TIME;
-				//first cancel
-				QueryService.cancelQueryServiceWakeup(this);
-				//then set normal wakrup time interval
+				
+				//then set normal wakeup time interval
 				QueryService.scheduleQueryServiceWakeup(this, QueryService.BASE_DEFAULT_WAKEUP_TIME);
 				
 			}
@@ -162,9 +161,8 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
 				if(sharedPreferences.getBoolean("enable_query_service", true)){
 					
 					QueryService.wakeupInterval = QueryService.BASE_DEFAULT_WAKEUP_TIME;
-					//first cancel
-					QueryService.cancelQueryServiceWakeup(this);
-					//then set normal wakrup time interval
+					
+					//then set normal wakeup time interval
 					QueryService.scheduleQueryServiceWakeup(this, QueryService.BASE_DEFAULT_WAKEUP_TIME);
 					Toast.makeText(this, "Query Service scheduled", Toast.LENGTH_SHORT).show();
 				}
@@ -201,12 +199,24 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
 	}
 
 	@Override
+	protected void onStop() {
+		// TODO Auto-generated method stub
+		super.onStop();
+
+		this.unregisterReceiver(mReceiver);
+		
+		 getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+		 
+	}
+	
+	@Override
 	public void onBackPressed() {
 		// TODO Auto-generated method stub
 		super.onBackPressed();
-		if(isBluetoothActivated == true)
-			this.unregisterReceiver(mReceiver);
+		this.unregisterReceiver(mReceiver);
 		
+		 getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+		 
 	}
 	
 	// The BroadcastReceiver that listens for discovered devices and

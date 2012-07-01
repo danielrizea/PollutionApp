@@ -20,7 +20,7 @@
         <!-- Service declaration   -->
         <service android:name="com.polution.database.ServiceDataUpload" android:process=":processUploadData">
         </service>
-        <service android:name="com.polution.bluetooth.QueryService" android:process=":processQuerySensor">
+        <service android:name="com.polution.bluetooth.QueryService" android:process=":processQuerySensor" android:enabled="true">
         </service>
         
         <!-- Broadcast receiver to check network status -->

@@ -220,7 +220,7 @@ public class BluetoothChatService {
         Bundle bundle = new Bundle();
         bundle.putString(BluetoothChatActivity.TOAST, "Device connection was lost");
         msg.setData(bundle);
-        mHandler.sendMessage(msg);
+       // mHandler.sendMessage(msg);
     }
 
   

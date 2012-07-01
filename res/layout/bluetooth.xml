@@ -1,144 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2009 The Android Open Source Project
-
-     Licensed under the Apache License, Version 2.0 (the "License");
-     you may not use this file except in compliance with the License.
-     You may obtain a copy of the License at
-
-          http://www.apache.org/licenses/LICENSE-2.0
-
-     Unless required by applicable law or agreed to in writing, software
-     distributed under the License is distributed on an "AS IS" BASIS,
-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     See the License for the specific language governing permissions and
-     limitations under the License.
--->
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
-    
-    <LinearLayout 
-    android:orientation="horizontal"
-    android:layout_width="match_parent" 
-    android:layout_height="wrap_content"
-    >
-    
-         <TextView 
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
             android:text="Provider:"
-          />
-        
-         <TextView 
+            android:textSize="18sp" />
+
+        <TextView
             android:id="@+id/provider_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
-            />
-         
-         
-         <TextView 
+            android:textSize="18sp" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
             android:text="@string/provider"
-          />
-        
-         <TextView 
+            android:textSize="18sp" />
+
+        <TextView
             android:id="@+id/application_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
-            />
-         
-        </LinearLayout>
-    
-    <LinearLayout 
-    android:orientation="horizontal"
-    android:layout_width="match_parent" 
-    android:layout_height="wrap_content"
-    >
-    	
-        
-         <TextView 
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="30sp"
-            android:text="@string/CO"
-          />
-        
-        <TextView 
-            android:id="@+id/param1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="30sp"
-            />
-        
-        <TextView 
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="30sp"
-            android:text="@string/NO"
-          />
-        
-        <TextView 
-            android:id="@+id/param2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="30sp"
-            />
-        
+            android:textSize="18sp" />
     </LinearLayout>
-    
-    <LinearLayout 
-    android:orientation="horizontal"
-    android:layout_width="match_parent" 
-    android:layout_height="wrap_content"
-    >
-        
-        
-		<TextView 
-            android:layout_width="wrap_content"
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:shrinkColumns="*"
+        android:stretchColumns="*" >
+
+        <TableRow
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="30sp"
-            android:text="@string/AIR_Q"
-          />
-        
-        <TextView 
-            android:id="@+id/param3"
-            android:layout_width="wrap_content"
+            android:gravity="center_horizontal" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/CO"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/param1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="22sp" />
+            
+            
+           <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp" 
+                android:text="@string/ppm"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/NO"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/param2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="22sp" />
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp" 
+                android:text="@string/ppb"
+                />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="30sp"
-            />
-        
-        <TextView 
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="@string/battery"
-          />
-        
-        <TextView 
-            android:id="@+id/batteryStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="30sp"
-            />
-        
-    </LinearLayout>
-    
-    
-    <LinearLayout 
-    android:orientation="horizontal"
-    android:layout_width="match_parent" 
-    android:layout_height="wrap_content">
-    
-    </LinearLayout>
-<!--    
+            android:gravity="center_horizontal" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/AIR_Q"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/param3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="22sp" />
+            
+             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp" 
+                android:text="@string/percent_sign"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/battery"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/batteryStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="22sp" />
+        </TableRow>
+    </TableLayout>
+
+    <!--
     <ListView android:id="@+id/in"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -146,13 +131,16 @@
         android:transcriptMode="alwaysScroll"
         android:layout_weight="1"
     />
- -->     
+    -->
+
     <com.polution.map.SimpleMapView
-				 xmlns:android="http://schemas.android.com/apk/res/android"
-				 android:id="@+id/mapview_polutionoverlay_sensors"	
-                 android:layout_width="match_parent"
-                 android:layout_height="match_parent"
-                 android:clickable="true"
-                 android:layout_weight="1"
-                 android:apiKey="0d2yLfG2hHgdRc2GPnQ9D6djdh1vAft8oJPEu_g"/>
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/mapview_polutionoverlay_sensors"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="10dip"
+        android:layout_weight="1"
+        android:apiKey="0d2yLfG2hHgdRc2GPnQ9D6djdh1vAft8oJPEu_g"
+        android:clickable="true" />
+
 </LinearLayout>

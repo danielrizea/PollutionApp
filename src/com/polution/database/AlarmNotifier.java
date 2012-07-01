@@ -30,14 +30,14 @@ public class AlarmNotifier extends BroadcastReceiver{
 		// TODO Auto-generated method stub
 	
 		
-		Log.d(DEBUG_TAG," received intent start serviceIntent");
+		Log.d(DEBUG_TAG," received intent to start serviceIntent");
 		try {
 			//add notification
-		
-			
-			//start sensor query service
-			Intent serviceIntent = new Intent(context, QueryService.class);
- 		   	context.startService(serviceIntent);
+				Log.d(DEBUG_TAG,"Start service");
+				//start sensor query service
+				Intent serviceIntent = new Intent(context, QueryService.class);
+	 		   	context.startService(serviceIntent);
+	 		    Log.d(DEBUG_TAG,"Start service");
  		   
 		    } catch (Exception e) {
 		    	Log.d(DEBUG_TAG, "Error receiving and decoding intent" + e.getMessage());

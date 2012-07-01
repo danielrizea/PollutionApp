@@ -444,12 +444,12 @@ public class BluetoothChatActivity extends MapActivity {
     						point.batteryVoltage = PollutionSensor.getBatteryVoltage(battery);
     						
     						
-    						float CO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val1), PollutionSensor.CO_Rs, point.batteryVoltage);
+    						float CO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val1), point.batteryVoltage,PollutionSensor.CO_SENSOR);
     						float co_ppm = PollutionSensor.getSensorValue(PollutionSensor.CO_SENSOR, CO_Rx); 
     						point.sensor_1 = co_ppm;
-    						param1.setText(co_ppm +" ppm");
+    						param1.setText(co_ppm+"");
     						
-    						float NO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val2), PollutionSensor.NO_Rs, point.batteryVoltage);
+    						float NO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val2), point.batteryVoltage, PollutionSensor.NO_SENSOR);
     						float no_ppb = PollutionSensor.getSensorValue(PollutionSensor.NO_SENSOR, NO_Rx);
     						point.sensor_2 = no_ppb;
     						DecimalFormat fm = new DecimalFormat("#.#");
@@ -458,9 +458,10 @@ public class BluetoothChatActivity extends MapActivity {
     						System.out.println(" [CO : Rx: "+CO_Rx+" ppm:"+co_ppm +"]");
     						System.out.println(" [NO : Rx: "+NO_Rx+" ppm:"+no_ppb +"]");
     						//percent
-    						float Air_Q = Float.parseFloat(val3) * 100 / 1024;
-    						
-    						param3.setText(fm.format(Air_Q)+"");
+    						//float Air_Q_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val3), point.batteryVoltage, PollutionSensor.AIR_Q_SENSOR);
+    						float Air_Q = PollutionSensor.getSensorValue(PollutionSensor.AIR_Q_SENSOR,Float.parseFloat(val3));
+    						point.sensor_3 = Air_Q;
+    						param3.setText(fm.format(Air_Q).toString());
     						point.sensor_3 = Air_Q;
 
     						point.timestamp = System.currentTimeMillis();

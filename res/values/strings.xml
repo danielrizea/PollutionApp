@@ -86,9 +86,12 @@
     <string name="save_database">save database</string>
     
     <string name="provider">Provider:</string>
-    
+    <string name="ppm">ppm</string>
+    <string name="ppb">ppb</string>
+    <string name="percent_sign">%</string>
     <string name="CO">CO:</string>
     <string name="NO">NO:</string>
-    <string name="AIR_Q">AIR_Q:</string>
-    <string name="battery">Battery:</string>
+    <string name="AIR_Q">AQ:</string>
+    <string name="battery">SB:</string>
+    
 </resources>

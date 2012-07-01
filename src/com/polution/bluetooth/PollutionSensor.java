@@ -51,24 +51,39 @@ public class PollutionSensor {
 	/** calculate variable resistor so that we can determine the readings for a specific sensor
 	*   the returned value is in ohmi
 	*/
-	public static Float getResitanceValue(float Vo, float Rs, float Vcc){
+	public static Float getResitanceValue(float ADC_val, float Vcc_val, int sensorType){
 		
-		float Rx = 0;
-		Vcc = (Vcc*4.4f)/1024;
-		Vo = (Vo*4.4f)/1024;
-		Rx = ((Vcc*Rs)-Vo*Rs)/Vo; 
-		System.out.println(" Vcc : "+Vcc+"Vo "+ Vo+" Rs " +Rs+" Rx "+Rx+" ");
-		return Rx;
+		float result = 0;
+		switch(sensorType){
+		
+		case CO_SENSOR : {
+			
+			result = (1024*330f*(Vcc_val - 1.52f)) / (1.1f * ADC_val) - 330;
+		} break;
+		
+		case NO_SENSOR : {
+			result = (1024*3300f*(Vcc_val - 1.52f)) / (1.1f * ADC_val) - 3300;
+			
+		} break;
+		
+		case AIR_Q_SENSOR : {
+			result = (1024*1000f*Vcc_val) / (1.1f * ADC_val) - 1000;
+		
+		} break;
+			
+		}
+		
+		return result;
 	}
 	/**
 	 * Determines the sensor value in ppm : particles per million
 	 * It uses the sensors datasheet to find out correspondence between variable resistor Rs and
 	 * the ppm or ppb value depending on the sensor type 
 	 * @param sensorType
-	 * @param Rs
+	 * @param Rx
 	 * @return
 	 */
-	public static int getSensorValue(int sensorType, float Rs){
+	public static int getSensorValue(int sensorType, float Rx){
 		
 		int value = 0;
 		
@@ -80,35 +95,42 @@ public class PollutionSensor {
 			//1k - 100ppm
 			//0k - 500ppm
 			
-			if(Rs>100000)
+			if(Rx>100000)
 				return 1;
 			
-			if(Rs<=100000 && Rs>10000){
-				return (int)((-1/10)*(Rs/1000)+11);
+			if(Rx<=100000 && Rx>10000){
+				return (int)((-1/10)*(Rx/1000)+11);
 			}
 					
-			if(Rs<=10000 && Rs>=1000){
-				return (int)(-10*(Rs/1000)+200);
+			if(Rx<=10000 && Rx>=1000){
+				return (int)(-10*(Rx/1000)+200);
 			}
 			
-			return (int)((Rs/1000)*(-490) + 500);
+			return (int)((Rx/1000)*(-490) + 500);
 			
 		} 
 		
 		case NO_SENSOR : {
 			
-			if(Rs < 10000)
+			if(Rx < 10000)
 				return 100;
 			
-			if(Rs < 100000 && Rs >= 10000)
-				return (int)((40/9)*(Rs/1000) + (500/9));
+			if(Rx < 100000 && Rx >= 10000)
+				return (int)((40/9)*(Rx/1000) + (500/9));
 			
-			if(Rs > 100000)
-				return (int)(12*(Rs/1000) - 900);
+			if(Rx > 100000)
+				return (int)(12*(Rx/1000) - 900);
 			
 		} break;
 		
-		case AIR_Q_SENSOR : {} break;
+		case AIR_Q_SENSOR : {
+			
+			//0 -100 interval
+			
+			return (int)((Rx *100)/1024);
+			
+		}
+		
 		}
 		
 		return value;

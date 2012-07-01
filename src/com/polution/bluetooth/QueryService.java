@@ -34,7 +34,7 @@ import com.polution.map.PollutionMapActivity;
 import com.polution.map.model.PollutionPoint;
 
 public class QueryService extends IntentService{
-
+	
 	//15 seconds
 	public static int BASE_DEFAULT_WAKEUP_TIME = 15000;
 	
@@ -88,10 +88,27 @@ public class QueryService extends IntentService{
 		super("SensorQueryService");
 	}
 	
+	
+	@Override
+	public void onStart(Intent intent, int startId) {
+		// TODO Auto-generated method stub
+		super.onStart(intent, startId);
+		Log.d(TAG, "Query Service started");
+	}
+	
+	@Override
+	public void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+		
+		myLocationManager.removeUpdates(myLocListener);
+		Log.d(TAG, "Query service stop");
+	}
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		// TODO Auto-generated method stub
 		
+		Log.d(TAG, "Start handle method");
 		this.contentResolver = this.getContentResolver();
 
         this.myLocListener = new MyLocListener();
@@ -157,7 +174,6 @@ public class QueryService extends IntentService{
 
 	        // Initialize the BluetoothChatService to perform bluetooth connections
 	        mChatService = new BluetoothChatService(this, mHandler);
-
 	    }
 	   /*
 	   
@@ -312,12 +328,12 @@ public class QueryService extends IntentService{
 
     						point.batteryVoltage = (1.1f*4.3f*Float.parseFloat(battery))/1024;
     						
-    						float CO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val1), PollutionSensor.CO_Rs, point.batteryVoltage);
+    						float CO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val1), point.batteryVoltage, PollutionSensor.CO_SENSOR);
     						float co_ppm = PollutionSensor.getSensorValue(PollutionSensor.CO_SENSOR, CO_Rx); 
     						point.sensor_1 = co_ppm;
 
     						
-    						float NO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val2), PollutionSensor.NO_Rs, point.batteryVoltage);
+    						float NO_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val2), point.batteryVoltage, PollutionSensor.NO_SENSOR);
     						float no_ppb = PollutionSensor.getSensorValue(PollutionSensor.NO_SENSOR, NO_Rx);
     						point.sensor_2 = no_ppb;
 
@@ -325,9 +341,9 @@ public class QueryService extends IntentService{
     						System.out.println(" [NO : Rx: "+NO_Rx+" ppm:"+no_ppb +"]");
     						//percent
 
-    						System.out.println(Float.parseFloat(val3));
-    						
-    						float Air_Q = (Float.parseFloat(val3) * 100) / 1024;
+    						//System.out.println();
+    						//float Air_Q_Rx = PollutionSensor.getResitanceValue(Float.parseFloat(val3), point.batteryVoltage, PollutionSensor.AIR_Q_SENSOR);
+    						float Air_Q = PollutionSensor.getSensorValue(PollutionSensor.AIR_Q_SENSOR, Float.parseFloat(val3));
     						//System.out.println(Float.parseFloat(val3));
     						point.sensor_3 = Air_Q;
     						point.timestamp = System.currentTimeMillis();
@@ -353,7 +369,7 @@ public class QueryService extends IntentService{
     private void adaptiveWakeupAlgorithm(Location myLoc,Location oldLoc){
     
     	if(myLoc == null || oldLoc == null){
-    		cancelQueryServiceWakeup(this);
+    		//cancelQueryServiceWakeup(this);
     		scheduleQueryServiceWakeup(this, QueryService.BASE_DEFAULT_WAKEUP_TIME);
     		return;
     	}
@@ -368,8 +384,7 @@ public class QueryService extends IntentService{
     			newWakeupTimeInterval = MAX_WAKEUP_TIME;
     		}
     		
-    		cancelQueryServiceWakeup(getApplicationContext());
-    		scheduleQueryServiceWakeup(getApplicationContext(), newWakeupTimeInterval);
+    		scheduleQueryServiceWakeup(this, newWakeupTimeInterval);
     		QueryService.wakeupInterval = newWakeupTimeInterval;
     		Toast.makeText(getApplicationContext(), "New scheduled time :" + newWakeupTimeInterval/1000 + " seconds", Toast.LENGTH_SHORT).show();
     		
@@ -377,7 +392,6 @@ public class QueryService extends IntentService{
     	{
     		//check to see if wakeup time greater than BASE_WAKEUP_TIME
     		if(oldWakeupTimeInterval > BASE_DEFAULT_WAKEUP_TIME){
-    			cancelQueryServiceWakeup(this);
     			scheduleQueryServiceWakeup(this, BASE_DEFAULT_WAKEUP_TIME);
     			QueryService.wakeupInterval = BASE_DEFAULT_WAKEUP_TIME;
     			Toast.makeText(this, "Revert wakeup time interval back to base time of " + BASE_DEFAULT_WAKEUP_TIME, Toast.LENGTH_SHORT).show();
@@ -441,28 +455,34 @@ public class QueryService extends IntentService{
         //cal.add(Calendar.SECOND, 30);
         
         //set the sensor sampling period
+    	Log.d("QueryServiceStatic", "Set alarm " + AlarmNotifier.Intent_code);
+    	
         Intent intent = new Intent(context, AlarmNotifier.class);
        
         intent.putExtra("alarm_message", "Query device");
         // In reality, you would want to have a static variable for the request code instead of 192837
-        PendingIntent sender = PendingIntent.getBroadcast(context, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent sender = PendingIntent.getBroadcast(context, AlarmNotifier.Intent_code, intent, 0);
         
         // Get the AlarmManager service
         AlarmManager am = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-        am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
+        //am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
         //5 seconds
-        am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), intervalMillis, sender);
+        am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis()+intervalMillis, intervalMillis, sender);
         QueryService.wakeupInterval = intervalMillis;
         
         return true;
     }
     
     public static boolean cancelQueryServiceWakeup(Context context){
+    	
     	Intent intent = new Intent(context, AlarmNotifier.class);
         
+    	Log.d("QueryServiceStatic", "cnacel alarm " + AlarmNotifier.Intent_code);
         intent.putExtra("alarm_message", "A message for the app");
         // In reality, you would want to have a static variable for the request code instead of 192837
-        PendingIntent sender = PendingIntent.getBroadcast(context, AlarmNotifier.Intent_code, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+       
+        
+        PendingIntent sender = PendingIntent.getBroadcast(context, AlarmNotifier.Intent_code, intent, 0);
         AlarmManager am = (AlarmManager) context.getSystemService(ALARM_SERVICE);
         
         am.cancel(sender);
