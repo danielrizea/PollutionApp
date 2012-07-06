@@ -5,15 +5,16 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import android.app.AlarmManager;
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
@@ -22,18 +23,19 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.android.maps.GeoPoint;
 import com.polution.database.AlarmNotifier;
 import com.polution.database.DatabaseTools;
 import com.polution.database.PollutionContentProvider;
 import com.polution.map.PollutionMapActivity;
 import com.polution.map.model.PollutionPoint;
 
-public class QueryService extends IntentService{
+public class QueryService extends CustomIntentService{
 	
 	//15 seconds
 	public static int BASE_DEFAULT_WAKEUP_TIME = 15000;
@@ -83,17 +85,32 @@ public class QueryService extends IntentService{
     private BluetoothChatService mChatService = null;
     private boolean D = true;
     
-    
+    private WakeLock wl;
 	public QueryService(){
 		super("SensorQueryService");
 	}
 	
-	
+	@Override
+	public void onCreate() {
+		// TODO Auto-generated method stub
+		super.onCreate();
+		setIntentRedelivery(true);
+		
+	}
 	@Override
 	public void onStart(Intent intent, int startId) {
 		// TODO Auto-generated method stub
 		super.onStart(intent, startId);
 		Log.d(TAG, "Query Service started");
+		
+		PowerManager pm = (PowerManager)getApplicationContext().getSystemService(Context.POWER_SERVICE);
+		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+		
+		if(wl != null && wl.isHeld() == false)
+			wl.acquire();
+
+		IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+		this.registerReceiver(bluetoothOnReceiver, filter);
 	}
 	
 	@Override
@@ -103,10 +120,15 @@ public class QueryService extends IntentService{
 		
 		myLocationManager.removeUpdates(myLocListener);
 		Log.d(TAG, "Query service stop");
+		wl.release();
+	
+		this.unregisterReceiver(bluetoothOnReceiver);
 	}
+
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		// TODO Auto-generated method stub
+
 		
 		Log.d(TAG, "Start handle method");
 		this.contentResolver = this.getContentResolver();
@@ -125,50 +147,101 @@ public class QueryService extends IntentService{
         }
 		
 		SharedPreferences preferance = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		
 
 		Log.d(TAG, "QueryService start");
 		
         // setupChat() will then be called during onActivityResult
         if (!mBluetoothAdapter.isEnabled()) {
         	mBluetoothAdapter.enable();
-            
-        while(!mBluetoothAdapter.isEnabled());
-        
-        // Otherwise, setup the chat session
-        } else {
-            if (mChatService == null) setupChat();
-        }
-        
-        if(mChatService == null)
-        	setupChat();
-        
-		if (mChatService != null) {
-            // Only if the state is STATE_NONE, do we know that we haven't started already
-            if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
-              // Start the Bluetooth chat services
-            Log.d(TAG,"Start chat ");	
-              mChatService.start();
-            }
-        }
-		
-		
-		if(preferance.contains("deviceMAC") == true){
+  
+        }         
+        else {
+	        
+	        if(mChatService == null)
+	        	setupChat();
+	        
+			if (mChatService != null) {
+	            // Only if the state is STATE_NONE, do we know that we haven't started already
+	            if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
+	              // Start the Bluetooth chat services
+	            Log.d(TAG,"Start chat ");	
+	              mChatService.start();
+	            }
+	        }
 			
-			String address = preferance.getString("deviceMAC", "not set");
-	
-			//Get the BLuetoothDevice object
-			BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-			//Attempt to connect to the device
-			Log.d(TAG, "Connect to device " + device.getAddress());
 			
-			Log.d(TAG,"Connect with " + mChatService);
-			mChatService.connect(device);
-		}else
-			Log.d(TAG, "No device mac");
-
+			if(preferance.contains("deviceMAC") == true){
+				
+				String address = preferance.getString("deviceMAC", "not set");
+		
+				//Get the BLuetoothDevice object
+				BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+				//Attempt to connect to the device
+				Log.d(TAG, "Connect to device " + device.getAddress());
+				
+				Log.d(TAG,"Connect with " + mChatService);
+				mChatService.connect(device);
+			}else
+				Log.d(TAG, "No device mac");
+        }
 	}
 
+	private BroadcastReceiver bluetoothOnReceiver = new BroadcastReceiver() {
+		
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			String action = intent.getAction();
+			//on state changed
+			 if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+		            final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+		                                                 BluetoothAdapter.ERROR);
+		            switch (state) {
+		            case BluetoothAdapter.STATE_OFF:
+
+		                break;
+		            case BluetoothAdapter.STATE_TURNING_OFF:
+
+		                break;
+		            case BluetoothAdapter.STATE_ON:
+		            	 
+		    	        if(mChatService == null)
+		    	        	setupChat();
+		    	        
+		    			if (mChatService != null) {
+		    	            // Only if the state is STATE_NONE, do we know that we haven't started already
+		    	            if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
+		    	              // Start the Bluetooth chat services
+		    	            Log.d(TAG,"Start chat ");	
+		    	              mChatService.start();
+		    	            }
+		    	        }
+		    			SharedPreferences preferance = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		    			
+		    			if(preferance.contains("deviceMAC") == true){
+		    				
+		    				String address = preferance.getString("deviceMAC", "not set");
+		    		
+		    				//Get the BLuetoothDevice object
+		    				BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+		    				//Attempt to connect to the device
+		    				Log.d(TAG, "Connect to device " + device.getAddress());
+		    				
+		    				Log.d(TAG,"Connect with " + mChatService);
+		    				mChatService.connect(device);
+		    			}else
+		    				Log.d(TAG, "No device mac");
+		            	
+		                break;
+		            case BluetoothAdapter.STATE_TURNING_ON:
+
+		                break;
+		            }
+		        }
+
+			
+		}
+	};
+	
 	   private void setupChat() {
 	        Log.d(TAG, "setupChat()");
 
@@ -249,6 +322,12 @@ public class QueryService extends IntentService{
            		if(prefs.getBoolean("enable_adaptive", false))
            			adaptiveWakeupAlgorithm(myLoc, lastLocation);
            		
+           		//send broadcast intent
+           		Intent intent = new Intent();
+           		intent.setAction(BluetoothChatActivity.UPDATE_SENSOR_VALUES_INTENT);
+           		intent.putExtra("pollution_point", p);
+           		getApplicationContext().sendBroadcast(intent);
+           		
            		
                    if(myLoc != null){
                 	   
@@ -271,6 +350,8 @@ public class QueryService extends IntentService{
                    mChatService.stop();
                    mBluetoothAdapter.disable();
                    System.out.println("Point " + p.toString());
+                   //stop the thread from waiting
+                   stopServiceCustom();
                    break;
                case MESSAGE_DEVICE_NAME:
                    // save the connected device's name

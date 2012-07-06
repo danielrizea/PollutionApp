@@ -153,7 +153,7 @@ public class DeviceListActivity extends Activity {
         // Request discover from BluetoothAdapter
         mBtAdapter.startDiscovery();
     }
-
+    
     // The on-click listener for all devices in the ListViews
     private OnItemClickListener mDeviceClickListener = new OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {

@@ -146,7 +146,7 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
 		if(key.equals("enable_adaptive")){
 			
 			if(sharedPreferences.getBoolean("enable_adaptive", false) == false){
-				
+			
 				QueryService.wakeupInterval = QueryService.BASE_DEFAULT_WAKEUP_TIME;
 				
 				//then set normal wakeup time interval
@@ -203,16 +203,6 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
 		// TODO Auto-generated method stub
 		super.onStop();
 
-		this.unregisterReceiver(mReceiver);
-		
-		 getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
-		 
-	}
-	
-	@Override
-	public void onBackPressed() {
-		// TODO Auto-generated method stub
-		super.onBackPressed();
 		this.unregisterReceiver(mReceiver);
 		
 		 getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);

@@ -1,35 +1,19 @@
-/*
- * Copyright (C) 2009 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 package com.polution.bluetooth;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.StringTokenizer;
 
 import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -42,24 +26,18 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.pollution.R;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
-import com.polution.database.AlarmNotifier;
+import com.pollution.R;
 import com.polution.database.DatabaseTools;
 import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
@@ -73,6 +51,9 @@ import com.polution.map.model.PollutionPoint;
 public class BluetoothChatActivity extends MapActivity {
 	
 
+	//special intent to update screen values
+	public static final String UPDATE_SENSOR_VALUES_INTENT = "com.pollution.intent.action.update_ui_sensor_values";
+	
     // Debugging
     private static final String TAG = "BluetoothChat";
     private static final boolean D = true;
@@ -113,7 +94,6 @@ public class BluetoothChatActivity extends MapActivity {
     private BluetoothChatService mChatService = null;
 
     private static String VOLT_SIGN = "V";
-    
     
     //---------------------- Pollution Map Components -------------------------------------//
     
@@ -243,6 +223,7 @@ public class BluetoothChatActivity extends MapActivity {
         // If BT is not on, request that it be enabled.
         // setupChat() will then be called during onActivityResult
         if (!mBluetoothAdapter.isEnabled()) {
+        	
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
         // Otherwise, setup the chat session
@@ -266,6 +247,9 @@ public class BluetoothChatActivity extends MapActivity {
               mChatService.start();
             }
         }
+        
+        IntentFilter filter = new IntentFilter(BluetoothChatActivity.UPDATE_SENSOR_VALUES_INTENT);
+        this.registerReceiver(updateSensorValues, filter);
     }
 
     private void setupChat() {
@@ -282,6 +266,7 @@ public class BluetoothChatActivity extends MapActivity {
     public synchronized void onPause() {
         super.onPause();
         if(D) Log.e(TAG, "- ON PAUSE -");
+        this.unregisterReceiver(updateSensorValues);
     }
 
     @Override
@@ -608,7 +593,23 @@ public class BluetoothChatActivity extends MapActivity {
 		
 
 	}
-    
+    //update UI sensor values
+    private final BroadcastReceiver updateSensorValues = new BroadcastReceiver() {
+		
+		@Override
+		public void onReceive(Context context, Intent intent) {
+
+			//update sensor fields
+			
+			PollutionPoint point = (PollutionPoint)intent.getSerializableExtra("pollution_point");
+			Log.d(TAG,"Broadcast receive intent " + point);
+			param1.setText(point.sensor_1+"");
+			param2.setText(point.sensor_2+"");
+			param3.setText(point.sensor_3+"");
+			batteryStatus.setText(transformToSensorOutput(point.batteryVoltage+"") + VOLT_SIGN);
+			
+		}
+	};
     
     class MyLocListener implements LocationListener{
 
