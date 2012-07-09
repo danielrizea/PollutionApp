@@ -277,7 +277,7 @@ public class QueryService extends CustomIntentService{
                    
                    case BluetoothChatService.STATE_CONNECTED:
                        if(D) Log.d(TAG,"Connected to " + mConnectedDeviceName);
-                       //stop connection
+
                        sendMessage(PollutionSensor.MESSAGE_QUERY_DEVICE);
                        
                        break;

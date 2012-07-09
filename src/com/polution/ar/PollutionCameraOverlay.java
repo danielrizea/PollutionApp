@@ -20,9 +20,9 @@ public class PollutionCameraOverlay extends View{
 
 	private Paint paintBackground;
 
-	private int width;
+	public int width;
 	
-	private int height;
+	public int height;
 	
 	
 	public int value = 0;
@@ -68,7 +68,7 @@ public class PollutionCameraOverlay extends View{
 		} else
 			b = 255;
 		
-		paintBackground.setColor(Color.argb(128, r, g, b));
+		paintBackground.setColor(Color.argb(100, r, g, b));
 		
 		canvas.drawRect(0,0,width,height, paintBackground);
 	}

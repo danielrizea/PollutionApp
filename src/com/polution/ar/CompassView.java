@@ -31,6 +31,7 @@ public class CompassView extends View {
 		initCompassView();
 		
 	}
+
 	
 	public CompassView(Context context, AttributeSet attrs) {
 		super(context, attrs);

@@ -22,17 +22,21 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MyLocationOverlay;
+import com.pollution.R;
 import com.polution.database.DatabaseTools;
 import com.polution.database.GEOPoint;
 import com.polution.database.PollutionContentProvider;
@@ -49,8 +53,15 @@ public class ARView extends Activity implements SensorEventListener{
     public final String TAG = "ARView";
     
     private PollutionCameraOverlay pollutionOverlay;
+    
+    
+    private TextView pollutionIntensity;
+    //1.000000 = 111 KM lat
+    //1.000000 = 71 KM lon
     //Location 
-    public int LOCATION_CONSTANT = 10000;
+    
+    public int LOCATION_CONSTANT = 100000;
+    
     
 	protected MapController mc;
 	protected boolean doUpdates = true;
@@ -107,6 +118,8 @@ public class ARView extends Activity implements SensorEventListener{
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         
+        setContentView(R.layout.ar_view);
+        
         sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
  
         // Create our Preview view and set it as the content of our activity.
@@ -123,14 +136,32 @@ public class ARView extends Activity implements SensorEventListener{
         //mDrawOnTop = new DrawOnTop(this);
         mPreview = new Preview(this, pollutionOverlay,compassView);
     
-        setContentView(mPreview);
+        
+        addContentView(mPreview,new LayoutParams(LayoutParams.FILL_PARENT,LayoutParams.FILL_PARENT));
         addContentView(pollutionOverlay, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-        
-        //addContentView(radarView, new LayoutParams(100, 100));
-        
+
         addContentView(compassView, new LayoutParams(100,100));
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        params.addRule(RelativeLayout.CENTER_VERTICAL);
         
         
+        pollutionIntensity = new TextView(this);
+        
+        pollutionIntensity.setPadding(180, 10, 0, 0);
+        pollutionIntensity.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
+        
+        pollutionIntensity.setText("No data");
+        pollutionIntensity.setLayoutParams(params);
+        addContentView(pollutionIntensity, params);
+        /*
+        TextView text = new TextView(this);
+        
+        text.setPadding(150, 30, 0, 0);
+        text.setText("COLOR :");
+        text.setLayoutParams(params);
+        addContentView(text,params);
+        */
         int test = getResources().getConfiguration().orientation;
         if(Configuration.ORIENTATION_LANDSCAPE == test) {
                     rotation = 90f;
@@ -287,9 +318,23 @@ public class ARView extends Activity implements SensorEventListener{
 					
 				Log.d(TAG,"Location changed");
 				
+				float pollution = 0;
 				if(points.size()>0){
 					
-					pollutionOverlay.value = points.get(0).calculatePollutionIntensityValue();
+					for(int i=0;i<points.size();i++){
+						
+						pollution += points.get(i).intensity;
+					}
+					
+					
+					pollution = pollution/points.size();
+					
+					//pollutionOverlay.value = points.get(0).calculatePollutionIntensityValue();
+					pollutionOverlay.value = (int)pollution;
+					System.out.println("Pollution average value" + pollutionOverlay.value );
+					
+					int percentage = (int)(pollution * 100)/255;
+					pollutionIntensity.setText(percentage + " %");
 				}
 					
 				values.close();
