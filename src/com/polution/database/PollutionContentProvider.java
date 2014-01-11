@@ -220,7 +220,7 @@ public class PollutionContentProvider extends ContentProvider {
    		 * @see android.content.ContentProvider#query(android.net.Uri, java.lang.String[], java.lang.String, java.lang.String[], java.lang.String)
    		 */
    		@Override
-		   public Cursor query(Uri uri, String[] projection, String selection,
+		 synchronized  public Cursor query(Uri uri, String[] projection, String selection,
 		      String[] selectionArgs, String sortOrder) {
 		           
 		      SQLiteQueryBuilder sqlBuilder = new SQLiteQueryBuilder();
@@ -293,7 +293,7 @@ public class PollutionContentProvider extends ContentProvider {
    		 * @see android.content.ContentProvider#insert(android.net.Uri, android.content.ContentValues)
    		 */
    		@Override
-		   public Uri insert(Uri uri, ContentValues values) {
+		synchronized   public Uri insert(Uri uri, ContentValues values) {
 			   // we will not insert new sensors or actuators
    			
    			switch (uriMatcher.match(uri)){

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -27,6 +28,7 @@ import com.polution.database.DatabaseTools;
 import com.polution.database.PollutionContentProvider;
 import com.polution.map.model.PollutionPoint;
 import com.polution.server.FileOperations;
+import com.polution.server.ServerComm;
 import com.polution.server.XMLProtocol;
 
 public class ViewPointsListView extends Activity{
@@ -39,6 +41,10 @@ public class ViewPointsListView extends Activity{
 	private List<PollutionPoint> points;
 	
 	private TextView pointsNo;
+	
+	ProgressDialog progressDialog = null;
+	
+	Context context = null;
 	
 	private ContentResolver contentResolver;
 	@Override
@@ -65,7 +71,7 @@ public class ViewPointsListView extends Activity{
 		
 		listAdapter = new ListPointsAdapter(this, R.layout.point_list_item, points);
 		lv.setAdapter(listAdapter);
-		
+		context = this;
 		listAdapter.notifyDataSetChanged();
 		
 	}
@@ -143,26 +149,63 @@ public class ViewPointsListView extends Activity{
 			
 
 				
-				List<PollutionPoint> points = XMLProtocol.parseXMLDocument(FileOperations.readFile(this, FileOperations.DATABASE_FILE_NAME));
-				//DELETE old database
-				Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/delete/point_table" );
-				contentResolver.delete(uri, null, null);
+				progressDialog = ProgressDialog.show(context, "Server Communication", "Loading database");
 				
-				//Insert points from database file
-				for(int i=0;i<points.size();i++){
-					uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
-                	contentResolver.insert(uri, DatabaseTools.getContentValues(points.get(i)));
-				}
+				
+				
+				Runnable runnable = new Runnable() {
+					
+					@Override
+					public void run() {
+						List<PollutionPoint> points = ServerComm.downloadPoints();
+						
+						//DELETE old database
+						Uri uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/delete/point_table" );
+						contentResolver.delete(uri, null, null);
+						
+						//Insert points from database file
+						for(int i=0;i<points.size();i++){
+							uri = Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/insert");
+		                	contentResolver.insert(uri, DatabaseTools.getContentValues(points.get(i)));
+						}
+						
+						progressDialog.dismiss();
+					}
+				};
+				//List<PollutionPoint> points = XMLProtocol.parseXMLDocument(FileOperations.readFile(this, FileOperations.DATABASE_FILE_NAME));
+				
+				Thread thread = new Thread(runnable);
+				thread.start();
+				
 				
 				
 			}break;
 			
 			case R.id.save_database : 
 			{
-				String content = XMLProtocol.retrieveXMLData(points);
-				FileOperations.saveFile(this, FileOperations.DATABASE_FILE_NAME, content);
+				final String content = XMLProtocol.retrieveXMLData(points);
+				//FileOperations.saveFile(this, FileOperations.DATABASE_FILE_NAME, content);
+				
+				Log.d("XML", content);
+				
+				progressDialog = ProgressDialog.show(context, "Server Communication", "Push database to server");
+				
+				
+				Runnable runnable = new Runnable() {
+					
+					@Override
+					public void run() {
+						ServerComm.uploadPoints(content);
+						progressDialog.dismiss();
+					}
+				};
+				
+				Thread threads = new Thread(runnable);
+				threads.start();
+				
+				
 				//and on SD card
-				FileOperations.saveFileToSDCard(FileOperations.DATABASE_FILE_NAME, content);
+				//FileOperations.saveFileToSDCard(FileOperations.DATABASE_FILE_NAME, content);
 			}break;
 
 		}

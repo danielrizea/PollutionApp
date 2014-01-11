@@ -7,23 +7,33 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import android.content.Context;
 import android.graphics.Canvas;
-import android.util.AttributeSet;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.VisibleRegion;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapView;
 import com.polution.map.events.PanChangeListener;
 import com.polution.map.events.ZoomChangeListener;
 
-public class SimpleMapView extends MapView {
+public class SimpleMapView extends SupportMapFragment {
 	
 	private int currentZoomLevel = -1;
 	private GeoPoint currentCenter;
 	private List<ZoomChangeListener> zoomEvents = new ArrayList<ZoomChangeListener>();
 	private List<PanChangeListener> panEvents = new ArrayList<PanChangeListener>();
 	
+	
+	private GoogleMap map;
 	//longPress section
     /**
      * Time in ms before the OnLongpressListener is triggered.
@@ -39,6 +49,8 @@ public class SimpleMapView extends MapView {
     private Timer longpressTimer = new Timer();
     private SimpleMapView.OnLongpressListener longpressListener;
     
+    
+    
     // Define the interface we will interact with from our Map
     public interface OnLongpressListener {
     	public void onLongpress(MapView view, GeoPoint longpressLocation);
@@ -48,38 +60,52 @@ public class SimpleMapView extends MapView {
         longpressListener = listener;
     }
     // end of custom longPress section
+    public SimpleMapView() {
+    	map = getMap();
+    }
     
+    @Override
+    public View onCreateView(LayoutInflater arg0, ViewGroup arg1, Bundle arg2) {
+        View v = super.onCreateView(arg0, arg1, arg2);
+        Fragment fragment = getParentFragment();
+
+        map = getMap();
+        
+        return v;
+    }
     
-	public SimpleMapView(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-	}
-
-	public SimpleMapView(Context context, String apiKey) {
-		super(context, apiKey);
-	}
-
-	public SimpleMapView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
 	/**
 	 * 
 	 * @return
 	 */
 	public int[][] getBounds() {
 		
-		GeoPoint center = getMapCenter();
-		int latitudeSpan = getLatitudeSpan();
-		int longtitudeSpan = getLongitudeSpan();
+		
+		LatLng center_new = map.getCameraPosition().target;
+		GeoPoint center = new GeoPoint((int)(center_new.latitude * 1E6),(int)(center_new.longitude * 1E6));
+
 		int[][] bounds = new int[2][2];
 
+		/*
 		bounds[0][0] = center.getLatitudeE6() - (latitudeSpan / 2);
 		bounds[0][1] = center.getLongitudeE6() - (longtitudeSpan / 2);
 
 		bounds[1][0] = center.getLatitudeE6() + (latitudeSpan / 2);
 		bounds[1][1] = center.getLongitudeE6() + (longtitudeSpan / 2);
+		*/
+		VisibleRegion region = map.getProjection().getVisibleRegion();
+		
+		LatLngBounds region_bounds = region.latLngBounds;
+		
+		bounds[0][0] = (int)(region_bounds.southwest.latitude * 1E6);
+		bounds[0][1] = (int)(region_bounds.southwest.longitude * 1E6);
+		
+		bounds[1][0] = (int)(region_bounds.northeast.latitude * 1E6);
+		bounds[1][1] = (int)(region_bounds.northeast.longitude * 1E6);
+		
 		return bounds;
 	}
-	
+	/*
 	public boolean onTouchEvent(final MotionEvent ev) {
 		
 		if (ev.getAction() == MotionEvent.ACTION_DOWN) {
@@ -88,14 +114,14 @@ public class SimpleMapView extends MapView {
             longpressTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    GeoPoint longpressLocation = getProjection().fromPixels((int)ev.getX(),
-                            (int)ev.getY());
+                    GeoPoint longpressLocation = map.getProjection().   getProjection().fromPixels((int)ev.getX(),
+                            (int)ev.getY()); 
  
-                    /*
-                     * Fire the listener. We pass the map location
-                     * of the longpress as well, in case it is needed
-                     * by the caller.
-                     */
+                    
+                    //  Fire the listener. We pass the map location
+                     // of the longpress as well, in case it is needed
+                     // by the caller.
+                     
                     longpressListener.onLongpress(SimpleMapView.this, longpressLocation);
                 }
  
@@ -147,7 +173,7 @@ public class SimpleMapView extends MapView {
 			currentZoomLevel = getZoomLevel();
 		}
 	}
-	
+	*/
 	private void fireZoomLevel(int old, int current){
 		for(ZoomChangeListener event : zoomEvents){
 			event.onZoom(old, current);

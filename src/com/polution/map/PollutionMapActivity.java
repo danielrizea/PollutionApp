@@ -3,7 +3,11 @@ package com.polution.map;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +18,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -26,8 +31,14 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.maps.GeoPoint;
-import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
@@ -41,7 +52,8 @@ import com.polution.map.SimpleMapView.OnLongpressListener;
 import com.polution.map.events.PanChangeListener;
 import com.polution.map.model.PollutionPoint;
 
-public class PollutionMapActivity extends MapActivity {
+public class PollutionMapActivity extends FragmentActivity implements
+OnMapClickListener, OnMapLongClickListener, LocationListener {
 
 	//scale
 	private TextView maxValueText;
@@ -63,6 +75,7 @@ public class PollutionMapActivity extends MapActivity {
 	//add-ons -------------------------------------------------------
 	MapController mc;
 	SimpleMapView mapView;
+	GoogleMap map;
 	GeoPoint p;
 	GeoPoint myLoc;
 	private TextView currentPointCoordinates;
@@ -98,20 +111,16 @@ public class PollutionMapActivity extends MapActivity {
 	
 	private MyLocListener myLocListener;
 	public static int ZOOM_LEVEL = 16;
+	
+	private ExecutorService executorService;
+	
+	private Context context;
 	// ===========================================================
 	// Extra-Classes
 	// ===========================================================
 	
-	
-	
-	@Override
-	protected boolean isRouteDisplayed() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
-	
-	
+	private ProgressDialog progressDialog = null;
+		
 	@Override
 	protected void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
@@ -119,15 +128,36 @@ public class PollutionMapActivity extends MapActivity {
 		setContentView(R.layout.polution_mapoverlay);
 		contentResolver = this.getContentResolver();
 		
+		int status = GooglePlayServicesUtil
+				.isGooglePlayServicesAvailable(getBaseContext());
+		// Showing status
+		if (status == ConnectionResult.SUCCESS) {
+			SupportMapFragment mapView = (SupportMapFragment) getSupportFragmentManager()
+					.findFragmentById(R.id.mapview_polutionoverlay);
+
+			// Getting a reference to the map
+			map = mapView.getMap();
+		} else {
+
+			int requestCode = 10;
+			Dialog dialog = GooglePlayServicesUtil.getErrorDialog(status, this,
+					requestCode);
+			dialog.show();
+		}
+		
+		
+		
+		
+		
+		
 		currentPointCoordinates = (TextView) findViewById(R.id.location_coordinates);
-		mapView = (SimpleMapView)findViewById(R.id.mapview_polutionoverlay);
 		selectedGas = (TextView)findViewById(R.id.shown_gas);
 		maxValueText = (TextView)findViewById(R.id.maxScaleValue);
 		minValueText = (TextView)findViewById(R.id.minScaleValue);
-		
+		this.context = this;
 		//set street level depth
-		this.overlay = new PollutionMapOverlay(200, mapView);
-		mapView.getOverlays().add(overlay);
+	//	this.overlay = new PollutionMapOverlay(200, mapView);
+//1		map.getOverlays().add(overlay);
 		
 		mapView.addPanChangeListener(new PanChangeListener() {
 			
@@ -138,7 +168,7 @@ public class PollutionMapActivity extends MapActivity {
 			}
 		});
 		
-		mc = mapView.getController();
+//1		mc = map.getController();
 
 		myLocListener = new MyLocListener();
 		
@@ -177,25 +207,28 @@ public class PollutionMapActivity extends MapActivity {
 	//	mapView.invalidate();
 		
 
-        this.myMapController = mapView.getController();
+ //1       this.myMapController = mapView.getController();
        
         /* With these objects we are capable of
          * drawing graphical stuff on top of the map */
 
-       
+/* 1111      
 		List<Overlay> listOfOverlays = mapView.getOverlays();
 		listOfOverlays.clear();
+	*/	
 		
+		executorService = Executors.newFixedThreadPool(1);
 		
-		myLocationOverlay = new MyLocationOverlay(this, mapView);
-		
-		
+//1		myLocationOverlay = new MyLocationOverlay(this, mapView);
+
+		/*
 		listOfOverlays.add(this.overlay);
 		listOfOverlays.add(myLocationOverlay);
+		*/
 		
 		//myLocationOverlay.enableCompass();
         myLocationOverlay.enableMyLocation();
-
+/*
         myLocationOverlay.runOnFirstFix(new Runnable() {
             public void run() {
                 mc.animateTo(myLocationOverlay.getMyLocation());
@@ -205,9 +238,9 @@ public class PollutionMapActivity extends MapActivity {
                 myLoc = myLocationOverlay.getMyLocation();
             }
         });
-       
+  */     
         // Initialize the LocationManager
-        this.myLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        myLocationOverlay.enableMyLocation();
         
         setupForLocationAutoUPDATES();
         
@@ -328,21 +361,56 @@ public class PollutionMapActivity extends MapActivity {
 	
 	private void updatePollutionOverlay(){
 		
-		List<PollutionPoint> points = new ArrayList<PollutionPoint>();
-		try{
-			Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + mapView.getBounds()[0][0] + "/" + mapView.getBounds()[0][1] + "/" + mapView.getBounds()[1][0] + "/" + mapView.getBounds()[1][1]);
-			Cursor values = managedQuery(uri, null, null, null, null);
-			
-			points = DatabaseTools.getPointsInBounds(values);
-			
-			values.close();
-		}catch(Exception e){};
-
-
 		
-		if(points.size() > 0){
-			overlay.update(points,selectedFlagForDesplay);
-		}
+		Runnable updatePoints = new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				
+				/*
+				PollutionMapActivity.this.runOnUiThread(new Runnable() {
+					
+					@Override
+					public void run() {
+						progressDialog = ProgressDialog.show(context, "", "Loading points");	
+					}
+				});
+				*/
+				List<PollutionPoint> points = new ArrayList<PollutionPoint>();
+				try{
+					Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + mapView.getBounds()[0][0] + "/" + mapView.getBounds()[0][1] + "/" + mapView.getBounds()[1][0] + "/" + mapView.getBounds()[1][1]);
+					Cursor values = managedQuery(uri, null, null, null, null);
+					
+					points = DatabaseTools.getPointsInBounds(values);
+					
+					values.close();
+				}catch(Exception e){};
+
+
+				final List<PollutionPoint> updatePoints = points;
+
+				PollutionMapActivity.this.runOnUiThread(new Runnable() {
+					
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						
+						if(updatePoints.size() > 0){
+							overlay.update(updatePoints,selectedFlagForDesplay);
+
+					}
+						//progressDialog.dismiss();
+				}
+
+				});
+				
+			}
+		};
+		
+		executorService.execute(updatePoints);
+		
+		
 
 	}
 	
@@ -387,10 +455,15 @@ public class PollutionMapActivity extends MapActivity {
 		public void onLocationChanged(Location location) {
 			// TODO Auto-generated method stub
 			//do something 
-			mc.animateTo(myLocationOverlay.getMyLocation());
+			
+			//TODO error here
     		
     		myLoc = new GeoPoint((int)(location.getLatitude()*1E6),(int)(location.getLongitude()*1E6));
  
+			
+			if(mc != null)
+				mc.animateTo(myLoc);
+
     		currentPointCoordinates.setText("lat:" + (double)(myLoc.getLatitudeE6()/1E6) + " lon:" + (double)(myLoc.getLongitudeE6()/1E6));
 
         	updatePollutionOverlay();
@@ -439,6 +512,51 @@ public class PollutionMapActivity extends MapActivity {
 			// TODO Auto-generated method stub
 			
 		}
+	}
+	@Override
+	public void onLocationChanged(Location location) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void onProviderDisabled(String provider) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void onProviderEnabled(String provider) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void onStatusChanged(String provider, int status, Bundle extras) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void onMapLongClick(LatLng arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void onMapClick(LatLng arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 }
 

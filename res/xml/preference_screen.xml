@@ -11,7 +11,7 @@
             android:title="WiFi" 
             android:summary="Enable WiFi server data upload on connection established"
             />  
-            
+    	 
     	<ListPreference 
     	    android:key="deviceMAC"
     	    android:title="Sensor Device MAC"

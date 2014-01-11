@@ -242,7 +242,7 @@ public class PollutionMapOverlay extends Overlay {
 			
 			}
 			
-			System.out.println("Value " + value + " " + p.intensity_CO + " " + p.intensity_NO);
+			//System.out.println("Value " + value + " " + p.intensity_CO + " " + p.intensity_NO);
 			
 			RadialGradient g = new RadialGradient(x, y, radius, Color.argb(
 					255, value, 0, 0), Color.argb(255, 0, 0, 0),
@@ -301,7 +301,10 @@ public class PollutionMapOverlay extends Overlay {
 			}
 			backbuffer.setPixels(pixels, 0, this.width, 0, 0, this.width,
 					this.height);
+		
+		System.out.println("Finish overlay");
 		}
+		
 	}
 	
 }

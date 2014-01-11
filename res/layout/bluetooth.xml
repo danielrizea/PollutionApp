@@ -2,8 +2,118 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+     >
 
+    <LinearLayout 
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="10dip"
+        android:layout_marginTop="30dip"
+        >
+             <LinearLayout 
+                 android:layout_width="fill_parent"
+                 android:layout_height="wrap_content"
+                 android:orientation="horizontal"
+                 >
+                 
+      <ProgressBar
+     style="@android:style/Widget.ProgressBar.Horizontal"
+          android:layout_width="200dip"
+     android:layout_height="55dip"
+     android:max="100"
+     android:secondaryProgress="55"
+     android:padding="10dip"
+     android:progressDrawable="@drawable/progress_orange"
+     />
+                 
+              <TextView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="AirQ:"
+                  android:textSize="24dp"
+                  />  
+               <TextView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="55 %"
+                   android:textSize="20dp"
+                  />     
+              
+             </LinearLayout>
+             
+                          <LinearLayout 
+                 android:layout_width="fill_parent"
+                 android:layout_height="wrap_content"
+                 android:orientation="horizontal"
+                 >
+                 
+      <ProgressBar
+     style="@android:style/Widget.ProgressBar.Horizontal"
+          android:layout_width="200dip"
+     android:layout_height="55dip"
+     android:max="100"
+     android:secondaryProgress="35"
+     android:padding="10dip"
+     android:progressDrawable="@drawable/progress_green"
+     />
+                 
+              <TextView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="CO:"
+                  android:textSize="24dp"
+                  />  
+               <TextView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="70 ppm"
+                   android:textSize="20dp"
+                  />     
+              
+             </LinearLayout>
+             
+                          
+                                       <LinearLayout 
+                 android:layout_width="fill_parent"
+                 android:layout_height="wrap_content"
+                 android:orientation="horizontal"
+                 >
+                 
+		      <ProgressBar
+		     style="@android:style/Widget.ProgressBar.Horizontal"
+		          android:layout_width="200dip"
+		     android:layout_height="55dip"
+		     android:max="100"
+		     android:secondaryProgress="85"
+		     android:padding="10dip"
+		     android:progressDrawable="@drawable/progress_red"
+		     />
+		                 
+		              <TextView
+		                  android:layout_width="wrap_content"
+		                  android:layout_height="wrap_content"
+		                  android:text="N0:"
+		                  android:textSize="24dp"
+		                  />  
+		               <TextView
+		                  android:layout_width="wrap_content"
+		                  android:layout_height="wrap_content"
+		                  android:text="500 ppm"
+		                   android:textSize="20dp"
+		                  />     
+              
+             </LinearLayout>
+        
+
+
+          
+      
+
+    </LinearLayout>
+   
+    <!-- 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -122,25 +232,19 @@
                 android:textSize="22sp" />
         </TableRow>
     </TableLayout>
-
-    <!--
-    <ListView android:id="@+id/in"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll"
-        android:layout_weight="1"
-    />
-    -->
-
-    <com.polution.map.SimpleMapView
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/mapview_polutionoverlay_sensors"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="10dip"
-        android:layout_weight="1"
-        android:apiKey="0d2yLfG2hHgdRc2GPnQ9D6djdh1vAft8oJPEu_g"
-        android:clickable="true" />
-
+-->
+   	<LinearLayout 
+   	    android:layout_width="fill_parent"
+   	    android:layout_height="wrap_content"
+   	    android:layout_gravity="center_horizontal"
+   	    android:layout_marginTop="30dip"
+   	    >
+	        <com.polution.bluetooth.CircleSensorView
+		    android:id="@+id/progress_circle"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_gravity="center_horizontal"
+		    android:layout_marginLeft="50dip"
+		    />
+	</LinearLayout>
 </LinearLayout>

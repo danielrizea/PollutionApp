@@ -3,7 +3,6 @@ package com.polution.view;
 
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -20,7 +19,8 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.pollution.R;
@@ -48,7 +48,9 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
 	protected void onCreate(Bundle savedInstanceState) {
 		
 		super.onCreate(savedInstanceState);
+		
 		addPreferencesFromResource(R.xml.preference_screen);
+		setContentView(R.layout.preference_main);
 		Context context = getApplicationContext();
 		
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -57,6 +59,10 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
 		
 		CharSequence key = "deviceMAC";
 		deviceMAC = (ListPreference)findPreference(key);
+		
+		
+		Button start_scan_button = (Button) findViewById(R.id.scan_device_button);
+		
 		
 		
 		System.out.println("Preference " + deviceMAC + " " + deviceMAC.getKey());
@@ -84,6 +90,8 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
             mBtAdapter.cancelDiscovery();
         }
 
+        String mac = prefs.getString("deviceMAC", "no");
+        
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Wait for device discovery");
         
@@ -91,7 +99,58 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
         entryValues = new String[20];
         
         
-        if(isBluetoothActivated){
+        start_scan_button.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				if(mBtAdapter.isEnabled()){
+				
+		      	progressDialog.show();
+
+	        	// Get a set of currently paired devices
+	            Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
+
+	            // If there are paired devices, add each one to the ArrayAdapter
+	            if (pairedDevices.size() > 0) {
+	                for (BluetoothDevice device : pairedDevices) {
+	                    mPairedDevicesArrayAdapter.add(device.getName() );
+	                    mPairedDevicesArrayAdapterValues.add(device.getAddress());
+	                }
+	            } else {
+	                String noDevices = getResources().getText(R.string.none_paired).toString();
+	                mPairedDevicesArrayAdapter.add(noDevices);
+	                mPairedDevicesArrayAdapterValues.add("no mac");
+	            }
+	        	
+	            // Indicate scanning in the title
+	            setProgressBarIndeterminateVisibility(true);
+		        // Request discover from BluetoothAdapter
+	            mBtAdapter.startDiscovery();
+		        Log.d("TAG", "Start discovery");
+		        
+		        entrys = new String[mPairedDevicesArrayAdapter.size()];
+		        entryValues = new String[mPairedDevicesArrayAdapterValues.size()];
+		        
+		        for(int i=0;i<mPairedDevicesArrayAdapter.size();i++){
+		        	entrys[i] = mPairedDevicesArrayAdapter.get(i);
+		        	if(i<mPairedDevicesArrayAdapterValues.size())
+		        		entryValues[i] = mPairedDevicesArrayAdapterValues.get(i);
+		        }
+		        deviceMAC.setEntries(entrys);
+		        deviceMAC.setEntryValues(entryValues);
+			
+				}else
+				{
+					Toast.makeText(getApplicationContext(), "Activate Bluetooth adapter", Toast.LENGTH_SHORT).show();
+				}
+				
+			}
+				
+		});
+        
+        
+        if(isBluetoothActivated && mac.equals("no")){
 
         	progressDialog.show();
 
@@ -222,6 +281,8 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // If it's already paired, skip it, because it's been listed already
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                	Toast.makeText(context, "Discovered " + device.getName(), Toast.LENGTH_SHORT).show();
+                	
                     mNewDevicesArrayAdapter.add(device.getName() );
                     mNewDevicesArrayAdapterValues.add(device.getAddress());
                 }
@@ -233,10 +294,14 @@ public class ApplicationPreference extends PreferenceActivity implements OnShare
             	
                 
             	if (mNewDevicesArrayAdapter.size() == 0) {
-                	 
-                    String noDevices = getResources().getText(R.string.none_found).toString();
+                
+            		Toast.makeText(context, "No new devices found", Toast.LENGTH_SHORT);
+            		/*
+                    String noDevices = "No new devices detected"; 
+                    		//getResources().getText(R.string.none_found).toString();
                     mNewDevicesArrayAdapter.add(noDevices);
                     mNewDevicesArrayAdapterValues.add(noDevices);
+                	*/
                 }
             	
 

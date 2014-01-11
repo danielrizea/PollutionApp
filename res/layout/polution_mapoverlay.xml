@@ -11,8 +11,7 @@
                  android:layout_width="match_parent"
                  android:layout_height="match_parent"
                  android:clickable="true"
-                 android:layout_weight="1"
-                 android:apiKey="0d2yLfG2hHgdRc2GPnQ9D6djdh1vAft8oJPEu_g"/>
+                 android:layout_weight="1"/>
       
     <TextView 
      android:id="@+id/location_coordinates"

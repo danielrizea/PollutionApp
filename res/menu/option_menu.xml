@@ -23,12 +23,12 @@
     <item android:id="@+id/query_device"
           android:icon="@android:drawable/ic_menu_mylocation"
           android:title="@string/query_device" />
-    <item android:id="@+id/start_sampling"
+    <item android:id="@+id/beep_device_start"
           android:icon="@android:drawable/ic_menu_mylocation"
-          android:title="@string/start_sampling"/>
-    <item android:id="@+id/stop_sampling"
+          android:title="@string/beep_device_start"/>
+    <item android:id="@+id/beep_device_stop"
           android:icon="@android:drawable/ic_menu_mylocation"
-          android:title="@string/stop_sampling" />
+          android:title="@string/beep_device_stop" />
 
         <item android:id="@+id/delete_points"
           android:icon="@android:drawable/ic_menu_mylocation"

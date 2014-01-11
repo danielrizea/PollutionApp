@@ -37,4 +37,8 @@
 	<color name="cardinal_color">#000000</color>
 	<color name="cardinal_color_north">#FF0000</color>
 	<color name="text_scale">#000000</color>
+	
+	<color name="orange">#FF7F00</color>
+	<color name="green">#8EDB00</color>
+	<color name="red">#E0000E</color>
 </resources>

@@ -42,7 +42,7 @@ public class DatabaseTools extends Activity{
 				point.timestamp = values.getInt(values.getColumnIndex("timestamp"));
 				//calculate sensor intensity values
 				point.calculatePollutionIntensityValue();
-				System.out.println(point);
+				//System.out.println(point);
 				points.add(point);
 				
 			}while(values.moveToNext());

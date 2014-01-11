@@ -48,7 +48,7 @@ import com.polution.map.model.PollutionPoint;
 /**
  * This is the main Activity that displays the current chat session.
  */
-public class BluetoothChatActivity extends MapActivity {
+public class SensorReadingsBluetoothActivity extends MapActivity {
 	
 
 	//special intent to update screen values
@@ -96,22 +96,16 @@ public class BluetoothChatActivity extends MapActivity {
     private static String VOLT_SIGN = "V";
     
     //---------------------- Pollution Map Components -------------------------------------//
-    
-	private PollutionMapOverlay overlay;
-	MapController mc;
-	SimpleMapView mapView;
-	GeoPoint p;
-	GeoPoint myLoc;
+
 	private TextView currentPointCoordinates;
 	
 	protected boolean doUpdates = true;
-	protected MapController myMapController = null;
+
 
 	protected LocationManager myLocationManager = null;
 	protected Location myLocation;
 	/** List of friends in */
 	protected ArrayList<GEOPoint> nearPoints = new ArrayList<GEOPoint>();
-	protected MyLocationOverlay myLocationOverlay;
 	
 	private MyLocListener myLocListener;
 
@@ -128,8 +122,7 @@ public class BluetoothChatActivity extends MapActivity {
     
     private TextView applicationStatusTextView;
     
-    
-    
+    private CircleSensorView circleSensorView;
     
     public String transformToSensorOutput(String stringValue){
     	
@@ -155,35 +148,14 @@ public class BluetoothChatActivity extends MapActivity {
         // Initialize the LocationManager
         this.myLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         
+        circleSensorView = (CircleSensorView) findViewById(R.id.progress_circle);
+        circleSensorView.percent = 65;
         
-        
-        //TODO not working make this work
-		//mapView = (SimpleMapView)findViewById(R.id.mapview_polutionoverlay_sensors);
-	//	this.applicationStatusTextView = (TextView) findViewById(R.id.application_status);
-	//	this.providerNameTextView = (TextView) findViewById(R.id.provider_name);
-		System.out.println(mapView);
-		
-	//	this.overlay = new PollutionMapOverlay(200, mapView);
-		
-//		mapView.getOverlays().add(overlay);
-		
-	//	mc = mapView.getController();
-	//	mc.setZoom(MAP_ZOOM_LEVEL);
-  //      this.myMapController = mapView.getController();
-        
-	//	List<Overlay> listOfOverlays = mapView.getOverlays();
-	//	listOfOverlays.clear();
-		
-		
-	//	myLocationOverlay = new MyLocationOverlay(this, mapView);
-		
+//		this.applicationStatusTextView = (TextView) findViewById(R.id.application_status);
+//		this.providerNameTextView = (TextView) findViewById(R.id.provider_name);
+
 		myLocListener = new MyLocListener();
-		
-	//	listOfOverlays.add(this.overlay);
-	//	listOfOverlays.add(myLocationOverlay);
-		
-		//myLocationOverlay.enableCompass();
-        myLocationOverlay.enableMyLocation();
+			//myLocationOverlay.enableCompass();
         
         setupForLocationAutoUPDATES();
 
@@ -192,21 +164,20 @@ public class BluetoothChatActivity extends MapActivity {
         mTitle.setText(R.string.app_name);
         mTitle = (TextView) findViewById(R.id.title_right_text);
         
-    //    param1 = (TextView) findViewById(R.id.param1);
+ //       param1 = (TextView) findViewById(R.id.param1);
         
-   //     param2 = (TextView) findViewById(R.id.param2); 
+ //       param2 = (TextView) findViewById(R.id.param2); 
         
-   //     param3 = (TextView) findViewById(R.id.param3); 
+ //       param3 = (TextView) findViewById(R.id.param3); 
         
-   //     batteryStatus = (TextView) findViewById(R.id.batteryStatus);
+ //       batteryStatus = (TextView) findViewById(R.id.batteryStatus);
         
-        
-       /* param1.setText("---.-");
+      /*  
+        param1.setText("---.-");
         param2.setText("---.-");
         param3.setText("---.-");
         batteryStatus.setText("--.-V");
         */
-        
         //decodeMessageRead("23.3333|342.233|34.34334|323.33");
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -253,7 +224,7 @@ public class BluetoothChatActivity extends MapActivity {
             }
         }
         
-        IntentFilter filter = new IntentFilter(BluetoothChatActivity.UPDATE_SENSOR_VALUES_INTENT);
+        IntentFilter filter = new IntentFilter(SensorReadingsBluetoothActivity.UPDATE_SENSOR_VALUES_INTENT);
         this.registerReceiver(updateSensorValues, filter);
     }
 
@@ -575,7 +546,7 @@ public class BluetoothChatActivity extends MapActivity {
                      .getLastKnownLocation(mCurrentProvider);
              
              Log.d(TAG,"Provider chosen " + mCurrentProvider);
-             providerNameTextView.setText(""+mCurrentProvider+"");
+            // providerNameTextView.setText(""+mCurrentProvider+"");
              myLocationManager.requestLocationUpdates(mCurrentProvider,
             		 MINIMUM_TIME_BETWEEN_UPDATE, MINIMUM_DISTANCECHANGE_FOR_UPDATE,myLocListener);
          }
@@ -605,8 +576,6 @@ public class BluetoothChatActivity extends MapActivity {
 
 		@Override
 		public void onLocationChanged(Location location) {
-	
-			mc.animateTo(myLocationOverlay.getMyLocation());
 		}
 
 		@Override
@@ -622,7 +591,7 @@ public class BluetoothChatActivity extends MapActivity {
                 Log.d(TAG,"Provider disabled, new provider " + mCurrentProvider);
                 myLocation = myLocationManager
                         .getLastKnownLocation(mCurrentProvider);
-                providerNameTextView.setText(""+mCurrentProvider+"");
+            //    providerNameTextView.setText(""+mCurrentProvider+"");
                 myLocationManager.requestLocationUpdates(mCurrentProvider,
                        MINIMUM_TIME_BETWEEN_UPDATE, MINIMUM_DISTANCECHANGE_FOR_UPDATE, this );
             }

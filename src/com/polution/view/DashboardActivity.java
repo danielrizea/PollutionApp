@@ -20,6 +20,7 @@ import android.widget.Button;
 import com.pollution.R;
 import com.polution.ar.ARView;
 import com.polution.bluetooth.BluetoothChatActivity;
+import com.polution.bluetooth.SensorReadingsBluetoothActivity;
 import com.polution.database.AlarmNotifier;
 import com.polution.map.PollutionMapActivity;
 
@@ -84,7 +85,7 @@ public class DashboardActivity extends Activity{
 			@Override
 			public void onClick(View v) {
 				// start sensor 
-				Intent intent = new Intent(getBaseContext(),BluetoothChatActivity.class);
+				Intent intent = new Intent(getBaseContext(),SensorReadingsBluetoothActivity.class);
 				startActivity(intent);
 			}
 		});

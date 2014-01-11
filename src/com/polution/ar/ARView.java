@@ -3,8 +3,11 @@ package com.polution.ar;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
@@ -16,6 +19,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -53,7 +57,7 @@ public class ARView extends Activity implements SensorEventListener{
     public final String TAG = "ARView";
     
     private PollutionCameraOverlay pollutionOverlay;
-    
+    private Context context;
     
     private TextView pollutionIntensity;
     //1.000000 = 111 KM lat
@@ -83,6 +87,8 @@ public class ARView extends Activity implements SensorEventListener{
 
     private double lastAngle = 0;
 
+    
+    private ExecutorService executorService = null;
     //private CompassView compassView; 
     SensorManager sensorManager;
 
@@ -92,6 +98,7 @@ public class ARView extends Activity implements SensorEventListener{
 	
 	public static final int ORIENT = 1;
 	public static final int ACC_MAGN = 2;
+	private ProgressDialog progressDialog;
 	
 	public static float EPS = 5;
 	
@@ -107,8 +114,7 @@ public class ARView extends Activity implements SensorEventListener{
     private CompassView compassView;
     // in landscape mode subtract 90
     private float rotation = 0;
-
-
+   
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -137,6 +143,8 @@ public class ARView extends Activity implements SensorEventListener{
         mPreview = new Preview(this, pollutionOverlay,compassView);
     
         
+        
+        context = this;
         addContentView(mPreview,new LayoutParams(LayoutParams.FILL_PARENT,LayoutParams.FILL_PARENT));
         addContentView(pollutionOverlay, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
 
@@ -145,6 +153,8 @@ public class ARView extends Activity implements SensorEventListener{
         params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         params.addRule(RelativeLayout.CENTER_VERTICAL);
         
+        
+        executorService = Executors.newFixedThreadPool(1);
         
         pollutionIntensity = new TextView(this);
         
@@ -177,7 +187,15 @@ public class ARView extends Activity implements SensorEventListener{
 		
 		myLocListener = new MyLocListener();
         
+		String provider = myLocationManager.getBestProvider(new Criteria(), true);
+		
+		Location loc = myLocationManager.getLastKnownLocation(provider);
+		
         setupForLocationAutoUPDATES();
+		
+        if(loc != null){			
+			getData(loc);
+		}
     }
     
     public void onSensorChanged(SensorEvent event) {
@@ -297,47 +315,81 @@ public class ARView extends Activity implements SensorEventListener{
 
 		}
 	    
+	    public void getData(Location locationProvided){
+	    	
+	    	
+	    	final Location location = locationProvided;
+	    	
+	    	Runnable runnable = new Runnable() {
+				
+				@Override
+				public void run() {
+			    	if(location == null)
+			    		return;
+			    	/*runOnUiThread(new Runnable() {
+						
+						@Override
+						public void run() {
+							progressDialog = ProgressDialog.show(context, "Fetch data", "Get local points");
+						}
+					});
+					*/
+			    	GeoPoint myloc = new GeoPoint((int)(location.getLatitude()*1E6), (int)(location.getLongitude()*1E6));
+					int startLat = myloc.getLatitudeE6() - LOCATION_CONSTANT;
+					int stopLat = myloc.getLatitudeE6() + LOCATION_CONSTANT;
+					int startLon = myloc.getLongitudeE6() - LOCATION_CONSTANT;
+					int stopLon = myloc.getLongitudeE6() + LOCATION_CONSTANT;
+						
+					Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + startLat + "/" + startLon + "/" + stopLat + "/" + stopLon);
+					Cursor values = contentResolver.query(uri, null, null, null, null);
+						
+					List<PollutionPoint> points = DatabaseTools.getPointsInBounds(values);
+					values.close();
+					
+					Log.d(TAG,"Location changed");
+					
+					float pollution = 0;
+					if(points.size()>0){
+						
+						for(int i=0;i<points.size();i++){
+							
+							pollution += points.get(i).intensity;
+						}
+						
+						
+						pollution = pollution/points.size();
+						
+						//pollutionOverlay.value = points.get(0).calculatePollutionIntensityValue();
+						pollutionOverlay.value = (int)pollution;
+						System.out.println("Pollution average value" + pollutionOverlay.value );
+						
+						int percentage = (int)(pollution * 100)/255;
+						pollutionIntensity.setText(percentage + " %");
+					}
+						
+
+					/*
+					runOnUiThread(new Runnable() {
+						
+						@Override
+						public void run() {
+							progressDialog.dismiss();
+						}
+					});
+					*/
+				}
+			};
+			
+			executorService.submit(runnable);
+			
+	    }
+	    
 	    class MyLocListener implements LocationListener{
 
 			@Override
 			public void onLocationChanged(Location location) {
 		
-				//mc.animateTo(myLocationOverlay.getMyLocation());
-				//TODO 
-				GeoPoint myloc = new GeoPoint((int)(location.getLatitude()*1E6), (int)(location.getLongitude()*1E6));
-
-				int startLat = myloc.getLatitudeE6() - LOCATION_CONSTANT;
-				int stopLat = myloc.getLatitudeE6() + LOCATION_CONSTANT;
-				int startLon = myloc.getLongitudeE6() - LOCATION_CONSTANT;
-				int stopLon = myloc.getLongitudeE6() + LOCATION_CONSTANT;
-					
-				Uri  uri= Uri.parse(PollutionContentProvider.CONTENT_URI_POINTS + "/" + startLat + "/" + startLon + "/" + stopLat + "/" + stopLon);
-				Cursor values = contentResolver.query(uri, null, null, null, null);
-					
-				List<PollutionPoint> points = DatabaseTools.getPointsInBounds(values);
-					
-				Log.d(TAG,"Location changed");
-				
-				float pollution = 0;
-				if(points.size()>0){
-					
-					for(int i=0;i<points.size();i++){
-						
-						pollution += points.get(i).intensity;
-					}
-					
-					
-					pollution = pollution/points.size();
-					
-					//pollutionOverlay.value = points.get(0).calculatePollutionIntensityValue();
-					pollutionOverlay.value = (int)pollution;
-					System.out.println("Pollution average value" + pollutionOverlay.value );
-					
-					int percentage = (int)(pollution * 100)/255;
-					pollutionIntensity.setText(percentage + " %");
-				}
-					
-				values.close();
+				getData(location);
 
 			}
 

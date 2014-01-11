@@ -558,7 +558,7 @@ public class QueryService extends CustomIntentService{
     	
     	Intent intent = new Intent(context, AlarmNotifier.class);
         
-    	Log.d("QueryServiceStatic", "cnacel alarm " + AlarmNotifier.Intent_code);
+    	Log.d("QueryServiceStatic", "cancel alarm " + AlarmNotifier.Intent_code);
         intent.putExtra("alarm_message", "A message for the app");
         // In reality, you would want to have a static variable for the request code instead of 192837
        

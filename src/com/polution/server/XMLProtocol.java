@@ -31,7 +31,7 @@ public class XMLProtocol {
 		        serializer.setOutput(writer);
 		        serializer.startDocument("UTF-8", true);
 		        serializer.startTag("", "pollution_points");
-		        serializer.attribute("", "number", String.valueOf(points.size()));
+		        //serializer.attribute("", "number", String.valueOf(points.size()));
 		        for (PollutionPoint p: points){
 		            serializer.startTag("", POINT);
 		            serializer.startTag("", LAT);
@@ -46,9 +46,9 @@ public class XMLProtocol {
 		            serializer.text(p.sensor_1+"");
 		            serializer.endTag("", CO);
 		            
-		            serializer.startTag("", CO);
+		            serializer.startTag("", NO);
 		            serializer.text(p.sensor_2+"");
-		            serializer.endTag("", CO);
+		            serializer.endTag("", NO);
 		            
 		            serializer.startTag("", AIR_Q);
 		            serializer.text(p.sensor_3+"");
@@ -73,7 +73,7 @@ public class XMLProtocol {
 	public static List<PollutionPoint> parseXMLDocument(InputStream inStream){
 		
 		ArrayList<PollutionPoint> points = new ArrayList<PollutionPoint>();
-		
+	
 		 XmlPullParser parser = Xml.newPullParser();
 	        try {
 	            // auto-detect the encoding from the stream
